@@ -3,7 +3,7 @@ import os, glob
 import numpy as np
 import numba as nb
 import pandas as pd
-import pyarrow.parquet as pq 
+import pyarrow.parquet as pq
 
 import matplotlib
 matplotlib.use('Agg')
@@ -34,16 +34,17 @@ def plot_kde():
     plt.rc('font', family='Serif')
 
     ax = plt.subplot(1, 1, 1)
-    df = pq.read_pandas(f'{src}/cloud_counts_042.pq').to_pandas()
+    df = pq.read_pandas(f'{src}/2d_cloud_counts_470.pq').to_pandas()
 
-    # Define grid
-    X_ = np.linspace(10, 1000, 990)
+    # Define grid for Kernel Density Estimate
+    X_ = np.linspace(1, df.max(), 400)
+    bins = np.linspace(1, df.max(), 80)
 
-    log_kde = KernelDensity(bandwidth=150).fit(df.counts[:, None])
+    log_kde = KernelDensity(bandwidth=40).fit(df.counts[:, None])
     kde = np.exp(log_kde.score_samples(X_[:, None]))
 
     plt.plot(X_, kde, '-+', label='Gaussian KDE')
-    plt.hist(df.counts, bins=np.arange(10, 1000, 100), log=True,
+    plt.hist(df.counts, bins=bins, log=True,
              histtype=u'step', density=True, label='Histogram')
 
     # Labels
@@ -54,7 +55,7 @@ def plot_kde():
     ax.set_ylabel(r'Normalized Density')
     
     plt.tight_layout(pad=0.5)
-    figfile = '../png/{}_BOMEX_12HR.png'.format(os.path.splitext(__file__)[0])
+    figfile = '../png/{}_BOMEX_BOWL.png'.format(os.path.splitext(__file__)[0])
     print('\t Writing figure to {}...'.format(figfile))
     plt.savefig(figfile,bbox_inches='tight', dpi=180, \
                 facecolor='w', transparent=True)
