@@ -20,7 +20,7 @@ import get_linear_reg
 def plot_kde():
     src = '/users/loh/nodeSSD/repos/size_oscillation'
 
-    for time in np.arange(0, 35, 5):
+    for time in np.arange(0, 540, 5):
         #---- Plotting 
         fig = plt.figure(1, figsize=(5, 4))
         fig.clf()
@@ -40,11 +40,11 @@ def plot_kde():
         df = pq.read_pandas(f'{src}/2d_cloud_counts_{time:03d}.pq').to_pandas()
 
         # Define grid
-        X_ = np.linspace(1, df.max(), df.max())
+        X_ = np.linspace(1, df.max(), 100)
 
         counts = df.counts[df.counts > 1]
         
-        log_kde = KernelDensity(bandwidth=1).fit(counts[:, None])
+        log_kde = KernelDensity(bandwidth=20).fit(counts[:, None])
         kde = np.log10(np.exp(log_kde.score_samples(X_[:, None])))
 
         plt.plot(np.log10(X_), kde, '-+')
