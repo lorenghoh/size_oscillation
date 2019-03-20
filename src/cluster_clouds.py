@@ -11,6 +11,16 @@ import scipy.ndimage.morphology as morph
 
 import var_calcs as vc
 
+def sample_conditional_field(ds):
+    th_v = vc.theta_v(
+        ds['p'][:]*100,
+        ds['TABS'][:],
+        ds['QV'][:]/1e3,
+        ds['QN'][:]/1e3,
+        ds['QP'][:]/1e3)
+    buoy_field = (th_v > np.mean(th_v, axis=(1,2)))
+    return buoy_field & (ds['QN'] > 0)
+
 @nb.jit(['i8[:](i4[:], i4)'], nogil=True, nopython=True)
 def count_features(labels, n_features):
     c_ = np.zeros(n_features, dtype=np.int_)
@@ -34,14 +44,7 @@ def cluster_clouds():
         with xr.open_dataset(item, autoclose=True) as ds:
             ds = ds.squeeze('time')
 
-            th_v = vc.theta_v(
-                ds['p'][:]*100,
-                ds['TABS'][:],
-                ds['QV'][:]/1e3,
-                ds['QN'][:]/1e3,
-                ds['QP'][:]/1e3)
-            buoy_field = (th_v > np.mean(th_v, axis=(1,2)))
-            c_field = buoy_field & (ds['QN'] > 0)
+            c_field = sample_conditional_field(ds)
 
             label, n_features = measure.label(c_field, structure=bin_struct)
             label = label.ravel()
