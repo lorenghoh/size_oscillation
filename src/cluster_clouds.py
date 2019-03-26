@@ -61,7 +61,7 @@ def cluster_clouds():
                 label = label.ravel()
 
                 f_counts = count_features(label, n_features)
-                df = pd.DataFrame(f_counts, columns=[f'{item}'])
+                df = pd.DataFrame(f_counts, columns=['counts'])
 
                 file_name = f'{dest}/2d_{item}_counts_{time:03d}.pq'
                 df.to_parquet(file_name)
