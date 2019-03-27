@@ -14,7 +14,7 @@ def main():
     df = pq.read_pandas('../pq/cloud_size_dist_slope.pq').to_pandas()
 
     x = np.arange(0, 540)
-    y = df.slope
+    y = df.ts
 
     #---- Plotting 
     fig = plt.figure(1, figsize=(10, 4))
