@@ -71,11 +71,12 @@ def calc_slope(counts):
 
 def main():
     src = '/users/loh/nodeSSD/repos/size_oscillation'
+    c_type = 'core'
 
     slopes = []
     cols = ['lr', 'ts', 'hb']
     for time in np.arange(0, 540):
-        pq_in = f'{src}/2d_cloud_counts_{time:03d}.pq'
+        pq_in = f'{src}/2d_{c_type}_counts_{time:03d}.pq'
         df = pq.read_pandas(pq_in).to_pandas()
 
         # slopes += [calc_slope(df.counts)]
@@ -88,7 +89,7 @@ def main():
             f'hb = {hb[0]:.3f}'
         )
         df_out = pd.DataFrame(slopes, columns=cols)
-        df_out.to_parquet(f'../pq/cloud_size_dist_slope.pq')
+        df_out.to_parquet(f'../pq/{c_type}_size_dist_slope.pq')
 
 if __name__ == '__main__':
     main()
