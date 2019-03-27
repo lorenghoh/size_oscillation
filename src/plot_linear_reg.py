@@ -40,14 +40,17 @@ def plot_kde():
         df = pq.read_pandas(f'{src}/2d_cloud_counts_{time:03d}.pq').to_pandas()
 
         # Define grid
-        X_ = np.linspace(1, df.max(), 100)
-
-        counts = df.counts[df.counts > 1]
+        X_ = np.logspace(0, np.log10(df.max()), 50)
         
-        log_kde = KernelDensity(bandwidth=20).fit(counts[:, None])
-        kde = np.log10(np.exp(log_kde.score_samples(X_[:, None])))
+        log_kde = KernelDensity(bandwidth=1).fit(df.counts[:, None])
+        kde = log_kde.score_samples(X_[:, None]) / np.log(10)
 
         plt.plot(np.log10(X_), kde, '-+')
+
+        # Significance line
+        plt.axhline(
+            np.log10(1/len(df)),
+            c='k', ls='--', lw=0.75)
 
         # Ridge regression
         reg_model = lm.RidgeCV()
@@ -75,7 +78,8 @@ def plot_kde():
 
         # Labels
         plt.legend()
-        plt.ylim(top=-1, bottom=-6)
+        plt.xlim((0, 3.5))
+        plt.ylim((-6, 0))
 
         plt.xlabel(r'$\log_{10}$ Counts')
         plt.ylabel(r'$\log_{10}$ Normalized Density')
