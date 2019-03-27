@@ -78,7 +78,15 @@ def main():
         pq_in = f'{src}/2d_cloud_counts_{time:03d}.pq'
         df = pq.read_pandas(pq_in).to_pandas()
 
-        slopes += [calc_slope(df.counts)]
+        # slopes += [calc_slope(df.counts)]
+        lr, ts, hb = calc_slope(df.counts)
+        slopes += [(lr, ts, hb)]
+        print(
+            f'{time:3d}', 
+            f'lr = {lr[0]:.3f}',
+            f'ts = {ts[0]:.3f}',
+            f'hb = {hb[0]:.3f}'
+        )
         df_out = pd.DataFrame(slopes, columns=cols)
         df_out.to_parquet(f'../pq/cloud_size_dist_slope.pq')
 
