@@ -11,10 +11,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def main():
-    df = pq.read_pandas('../pq/cloud_size_dist_slope.pq').to_pandas()
+    c_type = 'cloud'
+
+    df = pq.read_pandas(f'../pq/{c_type}_size_dist_slope.pq').to_pandas()
 
     x = np.arange(0, 540)
-    y = df.ts
 
     #---- Plotting 
     fig = plt.figure(1, figsize=(10, 4))
@@ -33,10 +34,17 @@ def main():
 
     ax = plt.subplot(1, 1, 1)
     
-    plt.plot(x, y, '-*', lw=0.75)
+    plt.plot(x, df.lr, 'k-', lw=0.75,
+            label='Linear Regression')
+    plt.plot(x, df.ts, '-*', lw=0.75,
+            label='Theil-Sen Regression')
+    plt.plot(x, df.hb, '--', lw=0.75,
+            label='Huber Regression')
 
     plt.xlabel(r'Time [min]')
     plt.ylabel(r'Slope $b$')
+
+    plt.legend()
     
     plt.tight_layout(pad=0.5)
     figfile = '../png/{}.png'.format(os.path.splitext(__file__)[0])
