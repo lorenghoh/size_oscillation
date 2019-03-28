@@ -13,12 +13,12 @@ import var_calcs as vc
 
 def sample_conditional_field(ds):
     th_v = vc.theta_v(
-        ds['p'][:]*100,
+        ds['p'][:] * 100,
         ds['TABS'][:],
-        ds['QV'][:]/1e3,
-        ds['QN'][:]/1e3,
-        ds['QP'][:]/1e3)
-        
+        ds['QV'][:] / 1e3,
+        ds['QN'][:] / 1e3,
+        ds['QP'][:] / 1e3)
+
     buoy_field = (th_v > np.mean(th_v, axis=(1, 2)))
 
     cloud_field = (ds['QN'] > 0)
@@ -37,7 +37,7 @@ def count_features(labels, n_features):
 
 def cluster_clouds():
     # TODO: read from model_config.json dict
-    src = '/Howard16TB/data/loh/BOMEX_12HR/variables'
+    src = '/Howard16TB/data/loh/BOMEX_BOWL/variables'
     dest = '/users/loh/nodeSSD/repos/size_oscillation'
 
     bin_struct = morph.generate_binary_structure(3, 1)
@@ -63,7 +63,7 @@ def cluster_clouds():
                 f_counts = count_features(label, n_features)
                 df = pd.DataFrame(f_counts, columns=['counts'])
 
-                file_name = f'{dest}/2d_{item}_counts_{time:03d}.pq'
+                file_name = f'{dest}/BOMEX_BOWL_2d_{item}_counts_{time:03d}.pq'
                 df.to_parquet(file_name)
 
                 print(f"Written {file_name}")
