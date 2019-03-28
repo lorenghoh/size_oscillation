@@ -15,8 +15,6 @@ from sklearn import linear_model as lm
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 
-import get_linear_reg
-
 def detect_outliers(regressor, x, y):
     # Initial regression
     regressor.fit(x[:, None], y)
