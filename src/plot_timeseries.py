@@ -11,14 +11,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def main():
+    case = 'BOMEX_BOWL' # Case name 
     c_type = 'cloud'
 
-    df = pq.read_pandas(f'../pq/{c_type}_size_dist_slope.pq').to_pandas()
-
+    df = pq.read_pandas(f'../pq/{case}_{c_type}_size_dist_slope.pq')
+    df = df.to_pandas()
+    
     x = np.arange(0, 540)
 
     #---- Plotting 
-    fig = plt.figure(1, figsize=(10, 4))
+    fig = plt.figure(1, figsize=(16, 4))
     fig.clf()
     sns.set_context('paper')
     sns.set_style('ticks', 

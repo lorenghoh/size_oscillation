@@ -12,31 +12,38 @@ import seaborn as sns
 
 from sklearn import linear_model as lm
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, WhiteKernel, Matern, \
-                                            ExpSineSquared, RationalQuadratic
+from sklearn.gaussian_process import kernels as kern
 
 def main():
-    df = pq.read_pandas('../pq/cloud_size_dist_slope.pq').to_pandas()
+    case = 'BOMEX_BOWL' # Case name 
+    c_type = 'core' # Type of clouds (core or cloud)
+    reg_model = 'ts' # See get_linear_reg.py for choices
 
-    kernel = 1.0 * RBF(length_scale_bounds=(1e3, 1e5)) \
-            + 1.0 * WhiteKernel(noise_level=1) \
-            + 1.0 * ExpSineSquared(
-                length_scale_bounds=(0.1, 10),   
-                periodicity=80, 
-                periodicity_bounds=(70, 90)) \
-            + 1.0 * ExpSineSquared(
-                length_scale_bounds=(0.1, 10), 
-                periodicity=40, 
-                periodicity_bounds=(30, 50))
-    gp = GaussianProcessRegressor(kernel=kernel,
-                                  normalize_y=False,
-                                  n_restarts_optimizer=15)
+    df = pq.read_pandas(f'../pq/{case}_{c_type}_size_dist_slope.pq')
+    df = df.to_pandas()
+
+    # kernel = 1.0 * kern.RBF(length_scale_bounds=(1e2, 1e4)) \
+    kernel = 1.0 * kern.() \
+            + 1.0 * kern.WhiteKernel(noise_level=1) \
+            + 1.0 * kern.ExpSineSquared(
+                        length_scale=1,
+                        periodicity=80, 
+                        periodicity_bounds=(70, 90)
+                    ) \
+            # + 1.0 * kern.ExpSineSquared(
+            #             length_scale=1,
+            #             periodicity=40, 
+            #             periodicity_bounds=(30, 50)
+            #         )
+    gp = GaussianProcessRegressor(
+            kernel=kernel,
+            n_restarts_optimizer=5)
 
     X_ = np.arange(540)
-    gp.fit(X_[:, None], np.array(df.slope))
+    gp.fit(X_[:, None], np.array(df[f'{reg_model}']))
 
     #---- Plotting 
-    fig = plt.figure(1, figsize=(10, 4))
+    fig = plt.figure(1, figsize=(12, 4))
     fig.clf()
     sns.set_context('paper')
     sns.set_style('ticks', 
@@ -52,9 +59,9 @@ def main():
 
     ax = plt.subplot(1, 1, 1)
 
-    plt.plot(X_, df.slope, '--*')
+    plt.plot(X_, df[f'{reg_model}'], '--*', zorder=9)
     
-    X = np.linspace(1, 540, 540)
+    X = np.linspace(1, 720, 2880)
     y_mean, y_std = gp.predict(X[:, None], return_std=True)
     plt.plot(X, y_mean, 'k', lw=1, zorder=9)
     plt.fill_between(X, y_mean - y_std, y_mean + y_std,
