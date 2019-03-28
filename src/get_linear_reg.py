@@ -10,10 +10,14 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Scikit
+from tqdm import tqdm
+
+# Scikitgit 
 from sklearn import linear_model as lm
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
+
+from get_outliers import detect_outliers
 
 def calc_slope(counts):
     # Define grid
@@ -28,68 +32,52 @@ def calc_slope(counts):
     
     log_kde = KernelDensity(bandwidth=2).fit(counts[:, None])
     kde = log_kde.score_samples(X_[:, None]) / np.log(10)
-    
-    # Initial regression
-    ts_model = lm.TheilSenRegressor(n_jobs=16)
-    ts_model.fit(np.log10(X_[:, None]), kde)
-    y_ts = ts_model.predict(np.log10(X_[:, None]))
 
-    # Sort by outliers
-    outlier_list = np.argsort(kde - y_ts)
-
-    # Maximum number of outliers (20%)
-    max_iter = np.int(0.2 * 50)
-    outliers = []
-    for i in range(max_iter):
-        # Update outlier list
-        outliers += [outlier_list[i]]
-
-        # Remove outlier and re-run regression
-        X_new = np.delete(X_, outliers)
-        kde_new = np.delete(kde, outliers)
-
-        ts_model = lm.TheilSenRegressor(n_jobs=16)
-        ts_model.fit(np.log10(X_new[:, None]), kde_new)
-        
-        corr = ts_model.score(np.log10(X_new[:, None]), kde_new)
-        if corr >= 0.975:
-            break
+    # Filter outliers
+    # reg_model = lm.TheilSenRegressor(n_jobs=16)
+    reg_model = lm.HuberRegressor(fit_intercept=False)
+    X_, Y_ = detect_outliers(
+        reg_model,
+        np.log10(X_),
+        kde)
 
     # Ridge regression
     lr_model = lm.RidgeCV()
-    lr_model.fit(np.log10(X_new[:, None]), kde_new[:])
+    lr_model.fit(np.log10(X_[:, None]), Y_[:])
 
     # Theil Sen regression
     ts_model = lm.TheilSenRegressor(n_jobs=16)
-    ts_model.fit(np.log10(X_new[:, None]), kde_new)
+    ts_model.fit(np.log10(X_[:, None]), Y_)
 
     # Huber regression
     hb_model = lm.HuberRegressor(fit_intercept=False)
-    hb_model.fit(np.log10(X_new[:, None]), kde_new)
+    hb_model.fit(np.log10(X_[:, None]), Y_)
 
     return lr_model.coef_, ts_model.coef_, hb_model.coef_
 
 def main():
     src = '/users/loh/nodeSSD/repos/size_oscillation'
-    c_type = 'core'
+
+    c_type = 'cloud'
+    case = 'BOMEX_BOWL'
 
     slopes = []
     cols = ['lr', 'ts', 'hb']
-    for time in np.arange(0, 540):
-        pq_in = f'{src}/2d_{c_type}_counts_{time:03d}.pq'
+    for time in tqdm(np.arange(0, 540)):
+        pq_in = f'{src}/{case}_2d_{c_type}_counts_{time:03d}.pq'
         df = pq.read_pandas(pq_in).to_pandas()
 
-        # slopes += [calc_slope(df.counts)]
-        lr, ts, hb = calc_slope(df.counts)
-        slopes += [(lr, ts, hb)]
-        print(
-            f'{time:3d}', 
-            f'lr = {lr[0]:.3f}',
-            f'ts = {ts[0]:.3f}',
-            f'hb = {hb[0]:.3f}'
-        )
-        df_out = pd.DataFrame(slopes, columns=cols)
-        df_out.to_parquet(f'../pq/{c_type}_size_dist_slope.pq')
+        slopes += [calc_slope(df.counts)]
+        # lr, ts, hb = calc_slope(df.counts)
+        # slopes += [(lr, ts, hb)]
+        # print(
+        #     f'{time:3d}', 
+        #     f'lr = {lr[0]:.3f}',
+        #     f'ts = {ts[0]:.3f}',
+        #     f'hb = {hb[0]:.3f}'
+        # )
+    df_out = pd.DataFrame(slopes, columns=cols)
+    df_out.to_parquet(f'../pq/{case}_{c_type}_size_dist_slope.pq')
 
 if __name__ == '__main__':
     main()
