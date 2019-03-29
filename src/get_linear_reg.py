@@ -30,7 +30,7 @@ def calc_slope(counts):
     # grid.fit(df.counts[:, None])
     # print(grid.best_params_)
     
-    log_kde = KernelDensity(bandwidth=2).fit(counts[:, None])
+    log_kde = KernelDensity(bandwidth=1).fit(counts[:, None])
     kde = log_kde.score_samples(X_[:, None]) / np.log(10)
 
     # Filter outliers
@@ -43,22 +43,23 @@ def calc_slope(counts):
 
     # Ridge regression
     lr_model = lm.RidgeCV()
-    lr_model.fit(np.log10(X_[:, None]), Y_[:])
+    lr_model.fit(X_[:, None], Y_[:])
 
     # Theil Sen regression
     ts_model = lm.TheilSenRegressor(n_jobs=16)
-    ts_model.fit(np.log10(X_[:, None]), Y_)
+    ts_model.fit(X_[:, None], Y_)
 
     # Huber regression
     hb_model = lm.HuberRegressor(fit_intercept=False)
-    hb_model.fit(np.log10(X_[:, None]), Y_)
+    hb_model.fit(X_[:, None], Y_)
 
     return lr_model.coef_, ts_model.coef_, hb_model.coef_
 
 def main():
     src = '/users/loh/nodeSSD/repos/size_oscillation'
 
-    c_type = 'cloud'
+    # TODO: Re-do cloud slopes
+    c_type = 'core'
     case = 'BOMEX_BOWL'
 
     slopes = []
@@ -67,15 +68,13 @@ def main():
         pq_in = f'{src}/{case}_2d_{c_type}_counts_{time:03d}.pq'
         df = pq.read_pandas(pq_in).to_pandas()
 
-        slopes += [calc_slope(df.counts)]
-        # lr, ts, hb = calc_slope(df.counts)
-        # slopes += [(lr, ts, hb)]
-        # print(
-        #     f'{time:3d}', 
-        #     f'lr = {lr[0]:.3f}',
-        #     f'ts = {ts[0]:.3f}',
-        #     f'hb = {hb[0]:.3f}'
-        # )
+        # Supress output
+        # slopes += [calc_slope(df.counts)]
+        lr, ts, hb = calc_slope(df.counts)
+        slopes += [(lr, ts, hb)]
+        tqdm.write(
+            f'{time:3d}, lr = {lr[0]:.3f}, ts = {ts[0]:.3f}, hb = {hb[0]:.3f}'
+        )
     df_out = pd.DataFrame(slopes, columns=cols)
     df_out.to_parquet(f'../pq/{case}_{c_type}_size_dist_slope.pq')
 
