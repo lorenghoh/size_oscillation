@@ -11,6 +11,8 @@ import scipy.ndimage.morphology as morph
 
 import var_calcs as vc
 
+from tqdm import tqdm
+
 def sample_conditional_field(ds):
     th_v = vc.theta_v(
         ds['p'][:] * 100,
@@ -46,7 +48,7 @@ def cluster_clouds():
     bin_struct[-1] = 0
 
     nc_list = sorted(glob.glob(f'{src}/*.nc'))
-    for time, item in enumerate(nc_list):
+    for time, item in tqdm(enumerate(nc_list)):
         with xr.open_dataset(item, autoclose=True) as ds:
             try:
                 ds = ds.squeeze('time')
@@ -63,10 +65,10 @@ def cluster_clouds():
                 f_counts = count_features(label, n_features)
                 df = pd.DataFrame(f_counts, columns=['counts'])
 
-                file_name = f'{dest}/BOMEX_BOWL_2d_{item}_counts_{time:03d}.pq'
+                file_name = f'{dest}/BOMEX_12HR_2d_{item}_counts_{time:03d}.pq'
                 df.to_parquet(file_name)
 
-                print(f"Written {file_name}")
+                tqdm.write(f"Written {file_name}")
 
 if __name__ == '__main__':
     cluster_clouds()
