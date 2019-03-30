@@ -58,8 +58,7 @@ def calc_slope(counts):
 def main():
     src = '/users/loh/nodeSSD/repos/size_oscillation'
 
-    # TODO: Re-do cloud slopes
-    c_type = 'core'
+    c_type = 'cloud'
     case = 'BOMEX_BOWL'
 
     slopes = []
@@ -68,8 +67,7 @@ def main():
         pq_in = f'{src}/{case}_2d_{c_type}_counts_{time:03d}.pq'
         df = pq.read_pandas(pq_in).to_pandas()
 
-        # Supress output
-        # slopes += [calc_slope(df.counts)]
+        # slopes += [calc_slope(df.counts)] # Supress output
         lr, ts, hb = calc_slope(df.counts)
         slopes += [(lr, ts, hb)]
         tqdm.write(

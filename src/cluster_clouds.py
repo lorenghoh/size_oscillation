@@ -39,7 +39,9 @@ def count_features(labels, n_features):
 
 def cluster_clouds():
     # TODO: read from model_config.json dict
-    src = '/Howard16TB/data/loh/BOMEX_BOWL/variables'
+    case = 'BOMEX_12HR'
+
+    src = f'/Howard16TB/data/loh/{case}/variables'
     dest = '/users/loh/nodeSSD/repos/size_oscillation'
 
     bin_struct = morph.generate_binary_structure(3, 1)
@@ -48,7 +50,7 @@ def cluster_clouds():
     bin_struct[-1] = 0
 
     nc_list = sorted(glob.glob(f'{src}/*.nc'))
-    for time, item in tqdm(enumerate(nc_list)):
+    for time, item in enumerate(tqdm(nc_list)):
         with xr.open_dataset(item, autoclose=True) as ds:
             try:
                 ds = ds.squeeze('time')
@@ -65,7 +67,7 @@ def cluster_clouds():
                 f_counts = count_features(label, n_features)
                 df = pd.DataFrame(f_counts, columns=['counts'])
 
-                file_name = f'{dest}/BOMEX_12HR_2d_{item}_counts_{time:03d}.pq'
+                file_name = f'{dest}/{case}_2d_{item}_counts_{time:03d}.pq'
                 df.to_parquet(file_name)
 
                 tqdm.write(f"Written {file_name}")
