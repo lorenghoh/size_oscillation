@@ -69,8 +69,8 @@ def main():
 
         ax = plt.subplot(1, 1, 1)
 
-        case = 'BOMEX_BOWL' # Case name 
-        c_type = 'core' # Type of clouds (core or cloud)
+        case = 'BOMEX_12HR' # Case name 
+        c_type = 'cloud' # Type of clouds (core or cloud)
 
         df = f'{src}/{case}_2d_{c_type}_counts_{time:03d}.pq'
         df = pq.read_pandas(df).to_pandas()

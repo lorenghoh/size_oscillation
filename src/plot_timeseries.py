@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def main():
-    case = 'BOMEX_BOWL' # Case name 
+    case = 'BOMEX_12HR' # Case name 
     c_type = 'cloud'
 
     df = pq.read_pandas(f'../pq/{case}_{c_type}_size_dist_slope.pq')

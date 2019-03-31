@@ -2,6 +2,7 @@ import os, glob
 
 import numpy as np
 import numba as nb
+import joblib as jb
 import pandas as pd
 import pyarrow.parquet as pq 
 
@@ -15,35 +16,36 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process import kernels as kern
 
 def main():
-    case = 'BOMEX_BOWL' # Case name 
-    c_type = 'core' # Type of clouds (core or cloud)
-    reg_model = 'ts' # See get_linear_reg.py for choices
+    case = 'BOMEX_12HR' # Case name 
+    c_type = 'cloud' # Type of clouds (core or cloud)
+    reg_model = 'hb' # See get_linear_reg.py for choices
 
     df = pq.read_pandas(f'../pq/{case}_{c_type}_size_dist_slope.pq')
     df = df.to_pandas()
 
-    # kernel = 1.0 * kern.RBF(length_scale_bounds=(1e2, 1e4)) \
-    kernel = 1.0 * kern.() \
+    kernel = 1.0 * kern.RBF(length_scale_bounds=(1, 1e4)) \
             + 1.0 * kern.WhiteKernel(noise_level=1) \
             + 1.0 * kern.ExpSineSquared(
-                        length_scale=1,
+                        length_scale=100,
+                        length_scale_bounds=(1, 1e3),
                         periodicity=80, 
-                        periodicity_bounds=(70, 90)
+                        periodicity_bounds=(65, 95)
                     ) \
             # + 1.0 * kern.ExpSineSquared(
-            #             length_scale=1,
+            #             length_scale=100,
+            #             length_scale_bounds=(1, 1e3),
             #             periodicity=40, 
-            #             periodicity_bounds=(30, 50)
+            #             periodicity_bounds=(25, 55)
             #         )
     gp = GaussianProcessRegressor(
             kernel=kernel,
-            n_restarts_optimizer=5)
+            n_restarts_optimizer=15)
 
     X_ = np.arange(540)
     gp.fit(X_[:, None], np.array(df[f'{reg_model}']))
 
     #---- Plotting 
-    fig = plt.figure(1, figsize=(12, 4))
+    fig = plt.figure(1, figsize=(10, 4))
     fig.clf()
     sns.set_context('paper')
     sns.set_style('ticks', 
@@ -61,7 +63,8 @@ def main():
 
     plt.plot(X_, df[f'{reg_model}'], '--*', zorder=9)
     
-    X = np.linspace(1, 720, 2880)
+    X = np.linspace(1, 540, 540) # Training scope
+    # X = np.linspace(1, 720, 2880) # Predictions
     y_mean, y_std = gp.predict(X[:, None], return_std=True)
     plt.plot(X, y_mean, 'k', lw=1, zorder=9)
     plt.fill_between(X, y_mean - y_std, y_mean + y_std,
@@ -72,6 +75,7 @@ def main():
     y_samples = gp.sample_y(X[:, None], 10)
     plt.plot(X, y_samples, lw=0.5, alpha=0.2)
 
+    # Plot labels
     plt.xlabel(r'Time [min]')
     plt.ylabel(r'Slope $b$')
     
