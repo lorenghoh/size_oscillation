@@ -6,26 +6,37 @@ import pandas as pd
 import pyarrow.parquet as pq 
 
 import lib_plot as plib
+import seaborn as sns
 
 def main():
     case = 'BOMEX_BOWL' # Case name 
     c_type = 'cloud'
 
-    df = pq.read_pandas(f'../pq/{case}_{c_type}_size_dist_slope.pq')
-    df = df.to_pandas()
-    
-    x = np.arange(0, 540)
-
     #---- Plotting 
     fig = plib.init_plot()
     ax = fig.add_subplot(111)
     
-    ax.plot(x, df.lr, 'k-', lw=0.75,
-            label='Linear Regression')
-    ax.plot(x, df.ts, '-*', lw=0.75,
+    x = np.arange(0, 540)
+
+    # Plot timeseries
+    file_name = f'../pq/{case}_{c_type}_size_dist_slope.pq'
+    df = pq.read_pandas(file_name).to_pandas()
+
+    # ax.plot(x, -df.lr, 'k-', lw=0.75,
+    #         label='Linear Regression')
+    ax.plot(x, -df.ts, '-*', lw=0.75,
             label='Theil-Sen Regression')
-    ax.plot(x, df.hb, '--', lw=0.75,
-            label='Huber Regression')
+    # ax.plot(x, -df.hb, '--', lw=0.75,
+    #         label='Huber Regression')
+
+    # Vars on the second scale
+    file_name = f'../pq/{case}_vars.pq'
+    df2 = pq.read_pandas(file_name).to_pandas()
+
+    ax2 = ax.twinx()
+    ax2.plot()
+
+    ax2.plot(x, df2.qp_ave, 'k-', lw=0.75)
 
     ax.set_xlabel(r'Time [min]')
     ax.set_ylabel(r'Slope $b$')
