@@ -5,13 +5,10 @@ import numba as nb
 import pandas as pd
 import pyarrow.parquet as pq 
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import seaborn as sns
+import lib_plot as plib
 
 def main():
-    case = 'BOMEX_12HR' # Case name 
+    case = 'BOMEX_BOWL' # Case name 
     c_type = 'cloud'
 
     df = pq.read_pandas(f'../pq/{case}_{c_type}_size_dist_slope.pq')
@@ -20,39 +17,23 @@ def main():
     x = np.arange(0, 540)
 
     #---- Plotting 
-    fig = plt.figure(1, figsize=(16, 4))
-    fig.clf()
-    sns.set_context('paper')
-    sns.set_style('ticks', 
-        {
-            'axes.grid': False,
-            'axes.linewidth': '0.75',
-            'grid.color': '0.75',
-            'grid.linestyle': u':',
-            'legend.frameon': True,
-        })
-    plt.rc('text', usetex=True)
-    plt.rc('font', family='Serif')
-
-    ax = plt.subplot(1, 1, 1)
+    fig = plib.init_plot()
+    ax = fig.add_subplot(111)
     
-    plt.plot(x, df.lr, 'k-', lw=0.75,
+    ax.plot(x, df.lr, 'k-', lw=0.75,
             label='Linear Regression')
-    plt.plot(x, df.ts, '-*', lw=0.75,
+    ax.plot(x, df.ts, '-*', lw=0.75,
             label='Theil-Sen Regression')
-    plt.plot(x, df.hb, '--', lw=0.75,
+    ax.plot(x, df.hb, '--', lw=0.75,
             label='Huber Regression')
 
-    plt.xlabel(r'Time [min]')
-    plt.ylabel(r'Slope $b$')
+    ax.set_xlabel(r'Time [min]')
+    ax.set_ylabel(r'Slope $b$')
 
-    plt.legend()
+    ax.legend()
     
-    plt.tight_layout(pad=0.5)
-    figfile = '../png/{}.png'.format(os.path.splitext(__file__)[0])
-    print('\t Writing figure to {}...'.format(figfile))
-    plt.savefig(figfile,bbox_inches='tight', dpi=180, \
-                facecolor='w', transparent=True)
+    file_name = f'../png/{os.path.splitext(__file__)[0]}.png'
+    plib.save_fig(fig, file_name)
 
 if __name__ == '__main__':
     main()
