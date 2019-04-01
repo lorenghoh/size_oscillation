@@ -18,8 +18,8 @@ def main():
     dest = '/users/loh/nodeSSD/repos/size_oscillation'
 
     # Initialize lists
-    qp_tot_list = []
     qp_sum_list = []
+    qp_ave_list = []
 
     nc_list = sorted(glob.glob(f'{src}/*.nc'))
     for time, item in enumerate(tqdm(nc_list[:540])):
@@ -29,13 +29,13 @@ def main():
             except:
                 pass
 
-        qp_tot = np.sum(np.array(ds.QP))
-        qp_tot_list += [qp_tot]
-        qp_sum_list += [qp_tot / len(ds.x) / len(ds.y)]
+        qp_sum = np.sum(np.array(ds.QP))
+        qp_sum_list += [qp_sum]
+        qp_ave_list += [qp_sum / len(ds.x) / len(ds.y)]
 
     dataset = {
-        'qp_tot': qp_tot_list,
-        'qp_sum': qp_sum_list}
+        'qp_sum': qp_sum_list,
+        'qp_ave': qp_ave_list}
     df = pd.DataFrame.from_dict(dataset)
 
     file_name = f'{dest}/{case}_vars.pq'
