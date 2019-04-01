@@ -29,6 +29,10 @@ def main():
     # ax.plot(x, -df.hb, '--', lw=0.75,
     #         label='Huber Regression')
 
+    ax.set_xlabel(r'Time [min]')
+    ax.set_ylabel(r'Slope $b$')
+    ax.legend()
+
     # Vars on the second scale
     file_name = f'../pq/{case}_vars.pq'
     df2 = pq.read_pandas(file_name).to_pandas()
@@ -38,10 +42,7 @@ def main():
 
     ax2.plot(x, df2.qp_ave, 'k-', lw=0.75)
 
-    ax.set_xlabel(r'Time [min]')
-    ax.set_ylabel(r'Slope $b$')
-
-    ax.legend()
+    ax2.set_ylabel(r'Ave. Precip. [g/kg]')
     
     file_name = f'../png/{os.path.splitext(__file__)[0]}.png'
     plib.save_fig(fig, file_name)
