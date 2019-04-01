@@ -9,7 +9,7 @@ import pyarrow.parquet as pq
 import scipy.ndimage.measurements as measure
 import scipy.ndimage.morphology as morph
 
-import var_calcs as vc
+import lib_calcs as vc
 
 from tqdm import tqdm
 
