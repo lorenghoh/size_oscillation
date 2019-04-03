@@ -3,9 +3,9 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def init_plot():
+def init_plot(f_size=(12, 4)):
     # TODO: user-defined sizes
-    fig = plt.figure(figsize=(12, 4))
+    fig = plt.figure(figsize=f_size)
 
     sns.set_context('paper')
     sns.set_style('ticks', 
@@ -21,9 +21,12 @@ def init_plot():
 
     return fig
 
-def save_fig(fig, file_name):
+def save_fig(fig, file_name, supress_output=False):
     fig.tight_layout(pad=0.5)
-    print('\t Writing figure to {}...'.format(file_name))
+
+    if supress_output:
+        print('\t Writing figure to {}...'.format(file_name))
+            
     fig.savefig(
         file_name,
         bbox_inches='tight',
