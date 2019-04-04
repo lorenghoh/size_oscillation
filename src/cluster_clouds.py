@@ -37,6 +37,14 @@ def count_features(labels, n_features):
             c_[labels[i]] += 1
     return c_
 
+"""
+    Clustering the cloud volumes/projections from the netcdf4 dataset.
+
+    There are a few different ways to cluster cloud/core volumes. The possible
+    choices are: 2d cluster (no clustering), 3d_volume (full cloud volume), 
+    3d_projection (projections of 3D volumes), 2d_projection (projections of
+    the entire cloud field), etc. 
+"""
 def cluster_clouds():
     # TODO: read from model_config.json dict
     case = 'BOMEX_12HR'
