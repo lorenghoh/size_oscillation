@@ -13,19 +13,19 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process import kernels as kern
 
 def main():
-    case = 'BOMEX_12HR' # Case name 
+    case = 'BOMEX_BOWL' # Case name 
     c_type = 'cloud' # Type of clouds (core or cloud)
-    reg_model = 'hb' # See get_linear_reg.py for choices
+    reg_model = 'ts' # See get_linear_reg.py for choices
 
-    df = pq.read_pandas(f'../pq/{case}_{c_type}_size_dist_slope.pq')
-    df = df.to_pandas()
+    file_name = f'../pq/{case}_{c_type}_size_dist_slope.pq'
+    df = pq.read_pandas(file_name).to_pandas()
 
-    kernel = 1.0 * kern.RBF(length_scale_bounds=(1, 1e4)) \
+    kernel = kern.RBF(length_scale_bounds=(1e1, 1e4)) \
             + 1.0 * kern.WhiteKernel(noise_level=1) \
             + 1.0 * kern.ExpSineSquared(
-                        length_scale=100,
-                        length_scale_bounds=(1, 1e3),
-                        periodicity=80, 
+                        length_scale=1e2,
+                        length_scale_bounds=(1e1, 1e4),
+                        periodicity=80,
                         periodicity_bounds=(65, 95)
                     ) \
             # + 1.0 * kern.ExpSineSquared(
@@ -36,7 +36,7 @@ def main():
             #         )
     gp = GaussianProcessRegressor(
             kernel=kernel,
-            n_restarts_optimizer=15)
+            n_restarts_optimizer=5)
 
     X_ = np.arange(540)
     gp.fit(X_[:, None], np.array(df[f'{reg_model}']))
