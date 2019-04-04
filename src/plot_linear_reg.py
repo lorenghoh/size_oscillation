@@ -21,7 +21,7 @@ def plot_kde():
     src = '/users/loh/nodeSSD/repos/size_oscillation'
 
     for time in tqdm(np.arange(0, 540, 5)):
-         #---- Plotting 
+        #---- Plotting 
         fig = plib.init_plot((5, 4))
         ax = fig.add_subplot(111)
 
@@ -78,7 +78,7 @@ def plot_kde():
             f'{rs_estimator.estimator_.coef_[0]:.3f}, '
             f'{ts_model.coef_[0]:.3f}, ' 
             f'{hb_model.coef_[0]:.3f}'
-        )
+        )``
 
         # Labels
         ax.legend()
