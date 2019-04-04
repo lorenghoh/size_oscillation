@@ -35,7 +35,7 @@ def calc_slope(counts):
 
     # Filter outliers
     # reg_model = lm.TheilSenRegressor(n_jobs=16)
-    reg_model = lm.HuberRegressor(fit_intercept=False)
+    reg_model = lm.RANSACRegressor()
     X_, Y_ = detect_outliers(
         reg_model,
         np.log10(X_),
@@ -45,6 +45,10 @@ def calc_slope(counts):
     lr_model = lm.RidgeCV()
     lr_model.fit(X_[:, None], Y_[:])
 
+    # RANSAC regression
+    rs_estimator = lm.RANSACRegressor()
+    rs_estimator.fit(X_[:, None], Y_)
+
     # Theil Sen regression
     ts_model = lm.TheilSenRegressor(n_jobs=16)
     ts_model.fit(X_[:, None], Y_)
@@ -53,25 +57,35 @@ def calc_slope(counts):
     hb_model = lm.HuberRegressor(fit_intercept=False)
     hb_model.fit(X_[:, None], Y_)
 
-    return lr_model.coef_, ts_model.coef_, hb_model.coef_
+    coefs = (
+        lr_model.coef_, 
+        rs_estimator.estimator_.coef_,
+        ts_model.coef_, 
+        hb_model.coef_
+    )
+    return coefs
 
 def main():
     src = '/users/loh/nodeSSD/repos/size_oscillation'
 
     c_type = 'cloud'
-    case = 'BOMEX_BOWL'
+    case = 'BOMEX_12HR'
 
     slopes = []
-    cols = ['lr', 'ts', 'hb']
+    cols = ['lr', 'rs', 'ts', 'hb']
     for time in tqdm(np.arange(0, 540)):
         pq_in = f'{src}/{case}_2d_{c_type}_counts_{time:03d}.pq'
         df = pq.read_pandas(pq_in).to_pandas()
 
         # slopes += [calc_slope(df.counts)] # Supress output
-        lr, ts, hb = calc_slope(df.counts)
+        lr, rs, ts, hb = calc_slope(df.counts)
         slopes += [(lr, ts, hb)]
         tqdm.write(
-            f'{time:3d}, lr = {lr[0]:.3f}, ts = {ts[0]:.3f}, hb = {hb[0]:.3f}'
+            f'{time:3d}, '
+            f'lr = {lr[0]:.3f}, '
+            f'rs = {rs[0]:.3f}, '
+            f'ts = {ts[0]:.3f}, '
+            f'hb = {hb[0]:.3f}'
         )
     df_out = pd.DataFrame(slopes, columns=cols)
     df_out.to_parquet(f'../pq/{case}_{c_type}_size_dist_slope.pq')
