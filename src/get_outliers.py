@@ -14,7 +14,7 @@ from sklearn.model_selection import GridSearchCV
 import lib_plot as plib
 import seaborn as sns
 
-def detect_outliers(regressor, x, y):
+def detect_outliers(regressor, x, y, rho=0.98):
     if regressor == None:
         regressor = lm.RidgeCV()
     
@@ -44,37 +44,37 @@ def detect_outliers(regressor, x, y):
     max_iter = int(len(x) * 0.20) # 20% max outliers
     for i in range(max_iter):
         # Remove outlier and re-run regression
-        x_ = x_ma.compressed()
-        y_ = y_ma.compressed()
-
-        regressor.fit(x_[:, None], y_)
-        corr = regressor.score(x_[:, None], y_)
+        corr = get_linear_corr(regressor, x_ma, y_ma)
         print(corr)
 
         # Stop at threshold correlation score
         # Otherwise, filter next outlier
-        if corr >= 0.98:
+        if corr >= rho:
             break
         else:
-            outlier = find_linear_outlier(regressor, x_ma, y_ma)
-            x_ma.mask[outlier] = True
-            y_ma.mask[outlier] = True
+            x_ma, y_ma, outlier = find_linear_outlier(regressor, x_ma, y_ma)
     if corr <= 0.9:
         warnings.warn("Warning: data cannot be fully linearlized")
     
-    return x_, y_, x_ma.mask
+    return x_ma.compressed(), y_ma.compressed(), x_ma.mask
 
-def find_linear_outlier(regressor, x_ma, y_ma):
+def get_linear_corr(regressor, x_ma, y_ma):
     x_ = x_ma.compressed()
     y_ = y_ma.compressed()
 
     regressor.fit(x_[:, None], y_)
+    return regressor.score(x_[:, None], y_)
+
+def find_linear_outlier(regressor, x_ma, y_ma):
+    regressor.fit(x_ma.compressed()[:, None], y_ma.compressed())
     y_reg = regressor.predict(x_ma.data[:, None])
     y_reg = np.ma.masked_array(y_reg, mask=y_ma.mask)
 
-    # Sort by outliers (Requires Numpy 1.16)
     outlier = np.abs(y_ma - y_reg).argsort(endwith=False)[-1]
-    return outlier
+    x_ma.mask[outlier] = True
+    y_ma.mask[outlier] = True
+
+    return x_ma, y_ma, outlier
 
 def compress_inliers(is_outlier, x, y):
     x_ = np.compress(~is_outlier, x)
