@@ -21,10 +21,10 @@ def init_plot(f_size=(12, 4)):
 
     return fig
 
-def save_fig(fig, file_name, supress_output=False):
+def save_fig(fig, file_name, print_output=True):
     fig.tight_layout(pad=0.5)
 
-    if supress_output:
+    if print_output:
         print('\t Writing figure to {}...'.format(file_name))
             
     fig.savefig(
