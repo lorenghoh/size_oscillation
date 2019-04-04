@@ -53,7 +53,7 @@ def detect_outliers(regressor, x, y):
 
         # Stop at threshold correlation score
         # Otherwise, filter next outlier
-        if np.isclose(corr, 0.99, atol=1e-3):
+        if corr >= 0.99:
             break
         else:
             outlier = find_linear_outlier(regressor, x_ma, y_ma)
