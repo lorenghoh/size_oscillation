@@ -1,4 +1,4 @@
-import os, glob
+import os, glob, warnings
 
 import numpy as np
 import numba as nb
@@ -41,7 +41,7 @@ def detect_outliers(regressor, x, y):
     x_ma = np.ma.masked_array(x, is_outlier)
     y_ma = np.ma.masked_array(y, is_outlier)
     
-    max_iter = 15
+    max_iter = int(len(x) * 0.20) # 20% max outliers
     for i in range(max_iter):
         # Remove outlier and re-run regression
         x_ = x_ma.compressed()
@@ -53,16 +53,16 @@ def detect_outliers(regressor, x, y):
 
         # Stop at threshold correlation score
         # Otherwise, filter next outlier
-        if corr >= 0.99:
+        if corr >= 0.98:
             break
         else:
             outlier = find_linear_outlier(regressor, x_ma, y_ma)
             x_ma.mask[outlier] = True
             y_ma.mask[outlier] = True
-    if corr <= 0.975:
-        raise ValueError("Given data cannot be linearized")
+    if corr <= 0.9:
+        warnings.warn("Warning: data cannot be fully linearlized")
     
-    return x_, y_
+    return x_, y_, x_ma.mask
 
 def find_linear_outlier(regressor, x_ma, y_ma):
     x_ = x_ma.compressed()
@@ -79,7 +79,7 @@ def find_linear_outlier(regressor, x_ma, y_ma):
 def compress_inliers(is_outlier, x, y):
     x_ = np.compress(~is_outlier, x)
     y_ = np.compress(~is_outlier, y)
-    return x_, y_
+    return x_, y_, is_outlier
 
 def find_RANSAC_outlier(regressor, x, y):
     regressor.fit(x[:, None], y)
@@ -88,6 +88,83 @@ def find_RANSAC_outlier(regressor, x, y):
 def find_huber_outlier(regressor, x, y):
     regressor.fit(x[:, None], y)
     return regressor.outliers_
+
+def plot_outliers(df):
+    #---- Plotting 
+    fig = plib.init_plot((8, 6))
+
+    for i in range(4):
+        ax = fig.add_subplot(2, 2, i+1)
+
+        # Define grid
+        X = np.logspace(0, np.log10(df.max()), 50)
+        
+        log_kde = KernelDensity(bandwidth=1).fit(df.counts[:, None])
+        kde = log_kde.score_samples(X[:, None]) / np.log(10)
+
+        # Filter outliers
+        try:
+            if i == 1:
+                regressor = None
+            elif i == 2:
+                regressor = lm.RANSACRegressor()
+            elif i == 3:
+                regressor = lm.HuberRegressor()
+            else:
+                raise ValueError
+        except ValueError:
+            ax.plot(np.log10(X[:, None]), kde[:], 'k-*', lw=0.5)
+            X_, Y_ = np.log10(X), kde
+        else:
+            X_, Y_, mask_ = detect_outliers(
+                                    regressor,
+                                    np.log10(X),
+                                    kde
+                                )
+
+            # Print in/outliers
+            ax.plot(np.log10(X[:, None]), kde[:], 'k-', lw=0.5)
+            ax.plot(np.log10(X[~mask_, None]), kde[~mask_], '*', c='k')
+            ax.plot(np.log10(X[mask_, None]), kde[mask_], '*', c='r')
+
+        # RANSAC
+        rs_estimator = lm.RANSACRegressor()
+        rs_estimator.fit(X_[:, None], Y_)
+        y_rs = rs_estimator.estimator_.predict(np.log10(X)[:, None])
+        ax.plot(np.log10(X), y_rs, '-', label='RANSAC')
+
+        # Theil Sen regression
+        ts_model = lm.TheilSenRegressor(n_jobs=16)
+        ts_model.fit(X_[:, None], Y_)
+        y_ts = ts_model.predict(np.log10(X)[:, None])
+        ax.plot(np.log10(X), y_ts, '--', label='Theil-Sen')
+
+        # Huber regression
+        hb_model = lm.HuberRegressor()
+        hb_model.fit(X_[:, None], Y_)
+        y_ts = hb_model.predict(np.log10(X)[:, None])
+        ax.plot(np.log10(X), y_ts, '-.', label='Huber')
+
+        # Labels
+        ax.legend()
+        if i == 0:
+            ax.set_title("No Outliers")
+        elif i == 1:
+            ax.set_title("Linear Detection")
+        elif i == 2:
+            ax.set_title("RANSAC Outliers")
+        elif i == 3:
+            ax.set_title("Huber Outliers")
+        else:
+            raise("Subplot id not recognized")
+        ax.set_xlim((0, 3.5))
+        ax.set_ylim((-6.5, 0))
+
+        ax.set_xlabel(r'$\log_{10}$ Counts')
+        ax.set_ylabel(r'$\log_{10}$ Normalized Density')
+    
+    file_name = f'../png/outlier_detection.png'
+    plib.save_fig(fig, file_name)
 
 def main():
     src = '/users/loh/nodeSSD/repos/size_oscillation'
@@ -98,63 +175,7 @@ def main():
     df = f'{src}/{case}_2d_{c_type}_counts_{time:03d}.pq'
     df = pq.read_pandas(df).to_pandas()
 
-    # TODO: 4-pane plots for different schemes
-    #---- Plotting 
-    fig = plib.init_plot((5, 4))
-    ax = fig.add_subplot(111)
-
-    # Define grid
-    X_ = np.logspace(0, np.log10(df.max()), 50)
-    
-    log_kde = KernelDensity(bandwidth=1).fit(df.counts[:, None])
-    kde = log_kde.score_samples(X_[:, None]) / np.log(10)
-
-    ax.plot(np.log10(X_[:, None]), kde, '-+')
-
-    # Filter outliers
-    X_, Y_ = detect_outliers(
-        None,
-        np.log10(X_),
-        kde)
-
-    # Ridge regression
-    reg_model = lm.RidgeCV()
-    reg_model.fit(X_[:, None], Y_[:])
-    y_reg = reg_model.predict(X_[:, None])
-    ax.plot(X_[:], y_reg, '-', c='k',
-            label='Linear Regression')
-
-    # RANSAC
-    rs_estimator = lm.RANSACRegressor()
-    rs_estimator.fit(X_[:, None], Y_)
-    y_rs = rs_estimator.estimator_.predict(X_[:, None])
-    ax.plot(X_, y_rs, '-',
-            label='RANSAC Estimator')
-
-    # Theil Sen regression
-    ts_model = lm.TheilSenRegressor(n_jobs=16)
-    ts_model.fit(X_[:, None], Y_)
-    y_ts = ts_model.predict(X_[:, None])
-    ax.plot(X_, y_ts, '--',
-            label='Theil-Sen Regression')
-
-    # Huber regression
-    hb_model = lm.HuberRegressor(fit_intercept=False)
-    hb_model.fit(X_[:, None], Y_)
-    y_ts = hb_model.predict(X_[:, None])
-    ax.plot(X_, y_ts, '-.',
-            label='Huber Regression')
-
-    # Labels
-    ax.legend()
-    ax.set_xlim((0, 3.5))
-    ax.set_ylim((-6.5, 0))
-
-    ax.set_xlabel(r'$\log_{10}$ Counts')
-    ax.set_ylabel(r'$\log_{10}$ Normalized Density')
-    
-    file_name = f'../png/outlier_detection.png'
-    plib.save_fig(fig, file_name)
+    plot_outliers(df)
 
 if __name__ == '__main__':
     main()
