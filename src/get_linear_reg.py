@@ -22,28 +22,20 @@ from get_outliers import detect_outliers
 def calc_slope(counts):
     # Define grid
     X_ = np.logspace(0, np.log10(counts.max()), 50)
-
-    # grid = GridSearchCV(
-    #     KernelDensity(),
-    #     {'bandwidth': np.linspace(1, 50, 50)},
-    #     n_jobs=16)
-    # grid.fit(df.counts[:, None])
-    # print(grid.best_params_)
     
     log_kde = KernelDensity(bandwidth=1).fit(counts[:, None])
     kde = log_kde.score_samples(X_[:, None]) / np.log(10)
 
     # Filter outliers
-    # reg_model = lm.TheilSenRegressor(n_jobs=16)
-    reg_model = lm.RANSACRegressor()
-    X_, Y_ = detect_outliers(
-        reg_model,
-        np.log10(X_),
-        kde)
+    X_, Y_, mask = detect_outliers(
+                        None,
+                        np.log10(X_),
+                        kde
+                    )
 
     # Ridge regression
     lr_model = lm.RidgeCV()
-    lr_model.fit(X_[:, None], Y_[:])
+    lr_model.fit(X_[:, None], Y_)
 
     # RANSAC regression
     rs_estimator = lm.RANSACRegressor()
@@ -53,39 +45,31 @@ def calc_slope(counts):
     ts_model = lm.TheilSenRegressor(n_jobs=16)
     ts_model.fit(X_[:, None], Y_)
 
-    # Huber regression
-    hb_model = lm.HuberRegressor(fit_intercept=False)
-    hb_model.fit(X_[:, None], Y_)
-
     coefs = (
         lr_model.coef_, 
         rs_estimator.estimator_.coef_,
-        ts_model.coef_, 
-        hb_model.coef_
+        ts_model.coef_
     )
     return coefs
 
 def main():
     src = '/users/loh/nodeSSD/repos/size_oscillation'
-
+    case = 'BOMEX_BOWL'
     c_type = 'cloud'
-    case = 'BOMEX_12HR'
 
     slopes = []
-    cols = ['lr', 'rs', 'ts', 'hb']
+    cols = ['lr', 'rs', 'ts']
     for time in tqdm(np.arange(0, 540)):
         pq_in = f'{src}/{case}_2d_{c_type}_counts_{time:03d}.pq'
         df = pq.read_pandas(pq_in).to_pandas()
 
-        # slopes += [calc_slope(df.counts)] # Supress output
-        lr, rs, ts, hb = calc_slope(df.counts)
-        slopes += [(lr, ts, hb)]
+        lr, rs, ts = calc_slope(df.counts)
+        slopes += [(lr, rs, ts)]
         tqdm.write(
             f'{time:3d}, '
             f'lr = {lr[0]:.3f}, '
             f'rs = {rs[0]:.3f}, '
-            f'ts = {ts[0]:.3f}, '
-            f'hb = {hb[0]:.3f}'
+            f'ts = {ts[0]:.3f}'
         )
     df_out = pd.DataFrame(slopes, columns=cols)
     df_out.to_parquet(f'../pq/{case}_{c_type}_size_dist_slope.pq')
