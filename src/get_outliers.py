@@ -45,9 +45,9 @@ def detect_outliers(regressor, x, y, rho=0.98):
     for i in range(max_iter):
         # Remove outlier and re-run regression
         corr = get_linear_corr(regressor, x_ma, y_ma)
-        print(corr)
+        # print(corr)
 
-        # Stop at threshold correlation score
+        # Stop at threshold correlation score (rho)
         # Otherwise, filter next outlier
         if corr >= rho:
             break
