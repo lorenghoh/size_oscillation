@@ -30,8 +30,7 @@ def main():
     #         label='Huber Regression')
 
     ax.set_xlabel(r'Time [min]')
-    ax.set_ylabel(r'Slope $b$')
-    ax.legend()
+    ax.set_ylabel(r'Slope $-b$')
 
     # Vars on the second scale
     file_name = f'../pq/{case}_vars.pq'
@@ -40,10 +39,17 @@ def main():
     ax2 = ax.twinx()
     ax2.plot()
 
-    ax2.plot(x, df2.qp_ave, 'k-', lw=0.75)
+    ax2.plot(x, df2.qp_ave, 'k-', lw=1.25,
+        label="Ave. Precip. [g/kg]"    
+    )
 
+    ax2.set_xticklabels([i * 60 for i in x])
     ax2.set_ylabel(r'Ave. Precip. [g/kg]')
     
+    lines, labels = ax.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax2.legend(lines + lines2, labels + labels2)
+
     file_name = f'../png/{os.path.splitext(__file__)[0]}.png'
     plib.save_fig(fig, file_name)
 
