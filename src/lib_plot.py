@@ -3,9 +3,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def init_plot(f_size=(12, 4)):
-    # TODO: user-defined sizes
-    fig = plt.figure(figsize=f_size)
+def init_plot(figsize=(12, 4)):
+    fig = plt.figure(figsize=figsize)
 
     sns.set_context('paper')
     sns.set_style('ticks', 
