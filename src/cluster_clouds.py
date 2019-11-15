@@ -2,83 +2,139 @@ import os, sys, glob
 
 import numpy as np
 import numba as nb
+
+import dask.array as da
+import dask.dataframe as dd
+from dask.delayed import delayed
+
 import xarray as xr
 import pandas as pd
-
 import pyarrow.parquet as pq
+
 import scipy.ndimage.measurements as measure
 import scipy.ndimage.morphology as morph
 
-import lib_calcs as vc
-
 from tqdm import tqdm
+from pathlib import Path
+
+import lib.calcs as calcs
+import lib.index as index
 
 def sample_conditional_field(ds):
-    th_v = vc.theta_v(
+    """
+    Define conditional fields
+
+    Return
+    ------
+    c0_fld: cloud field (QN > 0)
+    c1_fld: core field (QN > 0, W > 0, B > 0)
+    c2_fld: plume (tracer-dependant)
+    """
+    th_v = calcs.theta_v(
         ds['p'][:] * 100,
         ds['TABS'][:],
         ds['QV'][:] / 1e3,
         ds['QN'][:] / 1e3,
         ds['QP'][:] / 1e3)
 
-    buoy_field = (th_v > np.mean(th_v, axis=(1, 2)))
+    buoy = (th_v > np.mean(th_v, axis=(1, 2)))
 
-    cloud_field = (ds['QN'] > 0)
-    core_field = buoy_field & cloud_field
+    c0_fld = (ds['QN'] > 0)
+    c1_fld = (buoy & c0_fld)
 
-    return core_field, cloud_field
+    # Define plume based on tracer fields (computationally intensive)
+    # tr_field = ds['TR01'][:]
+    # tr_ave = np.nanmean(tr_field, axis=(1, 2))
+    # tr_std = np.std(tr_field, axis=(1, 2))
+    # tr_min = .05 * np.cumsum(tr_std) / (np.arange(len(tr_std))+1)
 
-@nb.jit(['i8[:](i4[:], i4)'], nogil=True, nopython=True)
-def count_features(labels, n_features):
-    c_ = np.zeros(n_features, dtype=np.int_)
+    # c2_fld = (tr_field > \
+    #             np.max(np.array([tr_ave + tr_std, tr_min]), 0)[:, None, None])
 
-    for i in range(len(labels)):
-        if  labels[i]> 0:
-            c_[labels[i]] += 1
-    return c_
+    return c0_fld, c1_fld
 
-"""
+def cluster_clouds():
+    """
     Clustering the cloud volumes/projections from the netcdf4 dataset.
 
     There are a few different ways to cluster cloud/core volumes. The possible
-    choices are: 2d cluster (no clustering), 3d_volume (full cloud volume), 
-    3d_projection (projections of 3D volumes), 2d_projection (projections of
-    the entire cloud field), etc. 
-"""
-def cluster_clouds():
-    # TODO: read from model_config.json dict
-    case = 'BOMEX_12HR'
+    choices are: 2d cluster (no clustering), ~~3d_volume (full cloud volume)~~,
+    3d_projection (projections of 3D volumes), 2d_projection (projections of the
+    entire cloud field), etc.
 
-    src = f'/Howard16TB/data/loh/{case}/variables'
-    dest = '/users/loh/nodeSSD/repos/size_oscillation'
+    Clustering options:
+    - 2d: 2D cluster (horizontal slices)
+    - projection: 3D projection
 
-    bin_struct = morph.generate_binary_structure(3, 1)
-    # Label 2D structures 
-    bin_struct[0] = 0
-    bin_struct[-1] = 0
+    Return
+    ------
+    Parquet files containing the coordinates
+    """
+    # TODO: Use ModelConfig class for model parameters
+    case_name = 'BOMEX_SWAMP'
 
-    nc_list = sorted(glob.glob(f'{src}/*.nc'))
-    for time, item in enumerate(tqdm(nc_list)):
-        with xr.open_dataset(item, autoclose=True) as ds:
-            try:
-                ds = ds.squeeze('time')
-            except:
-                pass
+    src = Path(f'/Howard16TB/data/loh/{case_name}/variables')
+    dest = '/users/loh/nodeSSD/temp'
 
-            core_field, cloud_field = sample_conditional_field(ds)
-            for item in ['core', 'cloud']:
-                c_field = locals()[f'{item}_field']
+    def write_clusters(ds, src, dest):
+        bin_st = morph.generate_binary_structure(3, 2)
+        bin_st[0] = 0
+        bin_st[-1] = 0
 
-                label, n_features = measure.label(c_field, structure=bin_struct)
-                label = label.ravel()
+        c0_fld, c1_fld = sample_conditional_field(ds)
 
-                f_counts = count_features(label, n_features)
-                df = pd.DataFrame(f_counts, columns=['counts'])
+        df = pd.DataFrame(columns = ['coord', 'cid', 'type'])
+        for item in [0, 1]:
+            c_field = locals()[f'c{item}_fld']
 
-                file_name = f'{dest}/{case}_2d_{item}_counts_{time:03d}.pq'
-                df.to_parquet(file_name)
+            c_label, n_features = measure.label(c_field, structure=bin_st)
+            c_label = c_label.ravel() # Sparse array
 
-                tqdm.write(f"Written {file_name}")
+            # Extract indices
+            c_index = np.arange(len(c_label))
+            c_index = c_index[c_label > 0]
+            c_label = c_label[c_label > 0]
+
+            if item == 0:
+                c_type = np.ones(len(c_label), dtype=int)
+            elif item == 1:
+                c_type = np.zeros(len(c_label), dtype=int)
+            else:
+                raise TypeError
+            
+            df_ = pd.DataFrame.from_dict(
+                    {
+                        'coord': c_index,
+                        'cid': c_label,
+                        'type': c_type,
+                    })
+            df = pd.concat([df, df_])
+        
+        file_name = f"{dest}/{case_name}_{time:04d}.pq"
+        df.to_parquet(file_name)
+        
+        tqdm.write(f"Written {file_name}")
+    
+    fl = sorted(src.glob('*'))
+    for time, item in enumerate(tqdm(fl)):
+        fname = item.as_posix()
+        if item.suffix == '.nc':
+            with xr.open_dataset(fname) as ds:
+                try:
+                    ds = ds.squeeze('time')
+                except:
+                    pass
+        elif item.suffix == '.zarr':
+            with xr.open_zarr(fname) as ds:
+                try:
+                    ds = ds.squeeze('time')
+                except:
+                    pass
+        else:
+            print("Error: File type not recognized.")
+            raise Exception
+        
+        write_clusters(ds, src, dest)
 
 if __name__ == '__main__':
     cluster_clouds()
