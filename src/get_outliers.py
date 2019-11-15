@@ -11,7 +11,7 @@ from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 
 # Plotting
-import lib_plot as plib
+import lib.plot as plib
 import seaborn as sns
 
 def detect_outliers(regressor, x, y, rho=0.98):
@@ -97,10 +97,9 @@ def plot_outliers(df):
         ax = fig.add_subplot(2, 2, i+1)
 
         # Define grid
-        X = np.logspace(0, np.log10(df.max()), 50)
-        
-        log_kde = KernelDensity(bandwidth=1).fit(df.counts[:, None])
-        kde = log_kde.score_samples(X[:, None]) / np.log(10)
+        x, y = np.unique(df.counts.value_counts(), return_index=True)
+        mask = (x > 1) & (y > 1)
+        x, y = np.log10(x[mask]), np.log10(y[mask])
 
         # Filter outliers
         try:
@@ -113,37 +112,37 @@ def plot_outliers(df):
             else:
                 raise ValueError
         except ValueError:
-            ax.plot(np.log10(X[:, None]), kde[:], 'k-*', lw=0.5)
-            X_, Y_ = np.log10(X), kde
+            ax.plot(np.array(x[:, None]), np.array(y), 'k-*', lw=0.5)
+            X_, Y_, = np.array(x), np.array(y)
         else:
             X_, Y_, mask_ = detect_outliers(
-                                    regressor,
-                                    np.log10(X),
-                                    kde
-                                )
+                                regressor,
+                                np.array(x),
+                             np.array(y)
+                            )
 
             # Print in/outliers
-            ax.plot(np.log10(X[:, None]), kde[:], 'k-', lw=0.5)
-            ax.plot(np.log10(X[~mask_, None]), kde[~mask_], '*', c='k')
-            ax.plot(np.log10(X[mask_, None]), kde[mask_], '*', c='r')
+            ax.plot(np.array(x[:, None]), y[:], 'k-', lw=0.5)
+            ax.plot(np.array(x[~mask_, None]), y[~mask_], '*', c='k')
+            ax.plot(np.array(x[mask_, None]), y[mask_], '*', c='r')
 
         # RANSAC
         rs_estimator = lm.RANSACRegressor()
         rs_estimator.fit(X_[:, None], Y_)
-        y_rs = rs_estimator.estimator_.predict(np.log10(X)[:, None])
-        ax.plot(np.log10(X), y_rs, '-', label='RANSAC')
+        y_rs = rs_estimator.estimator_.predict(np.array(x)[:, None])
+        ax.plot(np.array(x), np.array(y_rs), '-', label='RANSAC')
 
         # Theil Sen regression
         ts_model = lm.TheilSenRegressor(n_jobs=16)
         ts_model.fit(X_[:, None], Y_)
-        y_ts = ts_model.predict(np.log10(X)[:, None])
-        ax.plot(np.log10(X), y_ts, '--', label='Theil-Sen')
+        y_ts = ts_model.predict(np.array(x)[:, None])
+        ax.plot(np.array(x), np.array(y_ts), '--', label='Theil-Sen')
 
         # Huber regression
         hb_model = lm.HuberRegressor()
         hb_model.fit(X_[:, None], Y_)
-        y_ts = hb_model.predict(np.log10(X)[:, None])
-        ax.plot(np.log10(X), y_ts, '-.', label='Huber')
+        y_ts = hb_model.predict(np.array(x)[:, None])
+        ax.plot(np.array(x), np.array(y_ts), '-.', label='Huber')
 
         # Labels
         ax.legend()
@@ -157,8 +156,8 @@ def plot_outliers(df):
             ax.set_title("Huber Outliers")
         else:
             raise("Subplot id not recognized")
-        ax.set_xlim((0, 3.5))
-        ax.set_ylim((-6.5, 0))
+        # ax.set_xlim((0, 4))
+        # ax.set_ylim((-8, 0))
 
         ax.set_xlabel(r'$\log_{10}$ Counts')
         ax.set_ylabel(r'$\log_{10}$ Normalized Density')
@@ -167,14 +166,13 @@ def plot_outliers(df):
     plib.save_fig(fig, file_name)
 
 def main():
-    src = '/users/loh/nodeSSD/repos/size_oscillation'
-    case = 'BOMEX_12HR' # Case name 
-    c_type = 'cloud' # Type of clouds (core or cloud)
-    time = np.random.randint(540) # Pick a random time
+    src = '/users/loh/nodeSSD/temp'
+    time = np.random.randint(720) # Pick a random time
 
-    df = f'{src}/{case}_2d_{c_type}_counts_{time:03d}.pq'
-    df = pq.read_pandas(df).to_pandas()
+    df_name = f'{src}/BOMEX_SWAMP_volume_{time:04d}.pq'
+    df = pq.read_pandas(df_name).to_pandas()
 
+    df = df[df.type == 0].groupby(['cid']).size().reset_index(name='counts')
     plot_outliers(df)
 
 if __name__ == '__main__':
