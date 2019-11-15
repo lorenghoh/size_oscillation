@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 def main():
     # TODO: read from model_config.json dict
-    case = 'BOMEX_BOWL'
+    case = 'BOMEX_SWAMP'
 
     src = f'/Howard16TB/data/loh/{case}/variables'
     dest = '/users/loh/nodeSSD/repos/size_oscillation'
@@ -21,9 +21,9 @@ def main():
     qp_sum_list = []
     qp_ave_list = []
 
-    nc_list = sorted(glob.glob(f'{src}/*.nc'))
-    for time, item in enumerate(tqdm(nc_list[:540])):
-        with xr.open_dataset(item, autoclose=True) as ds:
+    nc_list = sorted(glob.glob(f'{src}/*.zarr'))
+    for time, item in enumerate(tqdm(nc_list[:720])):
+        with xr.open_zarr(item) as ds:
             try:
                 ds = ds.squeeze('time')
             except:

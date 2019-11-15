@@ -53,14 +53,14 @@ def calc_slope(counts):
     return coefs
 
 def main():
-    src = '/users/loh/nodeSSD/repos/size_oscillation'
-    case = 'BOMEX_BOWL'
+    src = '/users/loh/nodeSSD/temp'
+    case = 'BOMEX_SWAMP'
     c_type = 'cloud'
 
     slopes = []
     cols = ['lr', 'rs', 'ts']
-    for time in tqdm(np.arange(0, 540)):
-        pq_in = f'{src}/{case}_2d_{c_type}_counts_{time:03d}.pq'
+    for time in tqdm(np.arange(0, 720)):
+        pq_in = f'{src}/{case}_{c_type}_counts_{time:04d}.pq'
         df = pq.read_pandas(pq_in).to_pandas()
 
         lr, rs, ts = calc_slope(df.counts)
