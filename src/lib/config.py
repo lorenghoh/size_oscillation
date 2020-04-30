@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 
-# Resolve file path for project directory
+# Resolve file path for project working directory
 pwd = Path(__file__).parents[2]
 
 
@@ -11,7 +11,8 @@ def create_template():
     with open(pwd / "config.json", "w") as json_file:
         config = {
             "pwd": pwd.as_posix(),
-            # "data": "",
+            "data": "",
+            "output": "",
         }
         json.dump(config, json_file, indent=4)
 
@@ -27,8 +28,6 @@ def read_config():
         create_template()
 
         print("Created default configuration file config.json. Modify as needed. \n")
-
-        return config
     except ValueError:
         Path(pwd / "config.json").unlink()
 
@@ -58,7 +57,12 @@ def validate(config):
         pq_path.symlink_to(config["data"])
 
         if Path(config["data"]).exists():
-            print(sorted(pq_path.glob("*")))
+            print("Found the following data entries: ")
+
+            for item in sorted(pq_path.glob("*")):
+                print(f"\t {item.name}")
+
+            print()
         else:
             raise FileNotFoundError
     except FileNotFoundError:
@@ -69,4 +73,4 @@ if __name__ == "__main__":
     result = read_config()
 
     if isinstance(result, dict):
-        print(result)
+        print(json.dumps(result, indent=4))
