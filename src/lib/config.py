@@ -22,8 +22,6 @@ def read_config():
         with open(pwd / "config.json", "r") as json_file:
             config = json.load(json_file)
             validate(config)
-
-        return config
     except FileNotFoundError:
         create_template()
 
@@ -32,9 +30,11 @@ def read_config():
         Path(pwd / "config.json").unlink()
 
         print("Could not resolve config.json. Re-run configuration.")
+    finally:
+        return config
 
 
-def validate(config):
+def validate(config, output=False):
     try:
         flag = True
 
@@ -57,12 +57,13 @@ def validate(config):
         pq_path.symlink_to(config["data"])
 
         if Path(config["data"]).exists():
-            print("Found the following data entries: ")
+            if output is True:
+                print("Found the following data entries: ")
 
-            for item in sorted(pq_path.glob("*")):
-                print(f"\t {item.name}")
+                for item in sorted(pq_path.glob("*")):
+                    print(f"\t {item.name}")
 
-            print()
+                print()
         else:
             raise FileNotFoundError
     except FileNotFoundError:
