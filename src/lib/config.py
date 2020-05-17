@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 # Resolve file path for project working directory
-pwd = Path(__file__).parents[2]
+pwd = Path(__file__).absolute().parents[2]
 
 
 def create_template():
@@ -68,6 +68,8 @@ def validate(config, output=False):
             raise FileNotFoundError
     except FileNotFoundError:
         print("Config dictionary contains unresolvable path(s). \n")
+
+    # TODO: need a flag for symlink validation
 
 
 if __name__ == "__main__":
