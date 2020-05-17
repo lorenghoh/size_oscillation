@@ -317,8 +317,8 @@ text.hinting : native   ## May be one of the following:
                           ## is provided solely to allow old test images to remain
                           ## unchanged. Set to 6 to obtain previous behavior. Values
                           ## other than 0 or 6 have no defined meaning.
-#text.antialiased : True  ## If True (default), the text will be antialiased.
-                          ## This only affects the Agg backend.
+text.antialiased : True     ## If True (default), the text will be antialiased.
+                            ## This only affects the Agg backend.
 
 ## The following settings allow you to select the fonts in math mode.
 ## They map from a TeX font name to a fontconfig font pattern.
@@ -369,9 +369,9 @@ axes.grid.which    : both   ## gridlines at {major, minor, both} ticks
                               ##     - above patches but below lines ('line')
                               ##     - above all (False)
 
-#axes.formatter.limits : -5, 6  ## use scientific notation if log10
-                                ## of the axis range is smaller than the
-                                ## first or larger than the second
+#axes.formatter.limits : -5, 6      ## use scientific notation if log10
+                                    ## of the axis range is smaller than the
+                                    ## first or larger than the second
 #axes.formatter.use_locale : False  ## When True, format tick labels
                                     ## according to the user's locale.
                                     ## For example, use ',' as a decimal
@@ -483,22 +483,22 @@ axes.grid.which    : both   ## gridlines at {major, minor, both} ticks
 ## ***************************************************************************
 ## * GRIDS                                                                   *
 ## ***************************************************************************
-#grid.color     : b0b0b0  ## grid color
-#grid.linestyle : -       ## solid
-#grid.linewidth : 0.8     ## in points
-#grid.alpha     : 1.0     ## transparency, between 0.0 and 1.0
+grid.color     : b0b0b0
+grid.linestyle : dotted
+grid.linewidth : 0.8
+grid.alpha     : 0.8
 
 
 ## ***************************************************************************
 ## * LEGEND                                                                  *
 ## ***************************************************************************
-#legend.loc           : best
-#legend.frameon       : True     ## if True, draw the legend on a background patch
-#legend.framealpha    : 0.8      ## legend patch transparency
-#legend.facecolor     : inherit  ## inherit from axes.facecolor; or color spec
-#legend.edgecolor     : 0.8      ## background patch boundary color
-#legend.fancybox      : True     ## if True, use a rounded box for the
-                                 ## legend background, else a rectangle
+legend.loc           : best
+legend.frameon       : True         ## if True, draw the legend on a background patch
+legend.framealpha    : 0.8          ## legend patch transparency
+legend.facecolor     : inherit      ## inherit from axes.facecolor; or color spec
+legend.edgecolor     : 0.8          ## background patch boundary color
+legend.fancybox      : True         ## if True, use a rounded box for the
+                                    ## legend background, else a rectangle
 #legend.shadow        : False    ## if True, give background a shadow effect
 #legend.numpoints     : 1        ## the number of marker points in the legend line
 #legend.scatterpoints : 1        ## number of scatter points
