@@ -14,18 +14,22 @@ from sklearn.model_selection import GridSearchCV
 import lib.plot as plib
 import seaborn as sns
 
+
 def detect_outliers(regressor, x, y, rho=0.98):
-    if regressor == None:
+    if regressor is None:
         regressor = lm.RidgeCV()
-    
+
     reg_name = regressor.__class__.__name__
+
     if reg_name == 'RANSACRegressor':
         outlier = find_RANSAC_outlier(regressor, x, y)
         is_outlier = outlier
+
         return compress_inliers(is_outlier, x, y)
     elif reg_name == 'HuberRegressor':
         outlier = find_huber_outlier(regressor, x, y)
         is_outlier = outlier
+
         return compress_inliers(is_outlier, x, y)
     else:
         try:
@@ -40,8 +44,9 @@ def detect_outliers(regressor, x, y, rho=0.98):
 
     x_ma = np.ma.masked_array(x, is_outlier)
     y_ma = np.ma.masked_array(y, is_outlier)
-    
+
     max_iter = int(len(x) * 0.20) # 20% max outliers
+
     for i in range(max_iter):
         # Remove outlier and re-run regression
         corr = get_linear_corr(regressor, x_ma, y_ma)
@@ -49,20 +54,24 @@ def detect_outliers(regressor, x, y, rho=0.98):
 
         # Stop at threshold correlation score (rho)
         # Otherwise, filter next outlier
+
         if corr >= rho:
             break
         else:
             x_ma, y_ma, outlier = find_linear_outlier(regressor, x_ma, y_ma)
+
     if corr <= 0.9:
         warnings.warn("Warning: data cannot be fully linearlized")
     
     return x_ma.compressed(), y_ma.compressed(), x_ma.mask
+
 
 def get_linear_corr(regressor, x_ma, y_ma):
     x_ = x_ma.compressed()
     y_ = y_ma.compressed()
 
     regressor.fit(x_[:, None], y_)
+
     return regressor.score(x_[:, None], y_)
 
 def find_linear_outlier(regressor, x_ma, y_ma):
@@ -79,14 +88,17 @@ def find_linear_outlier(regressor, x_ma, y_ma):
 def compress_inliers(is_outlier, x, y):
     x_ = np.compress(~is_outlier, x)
     y_ = np.compress(~is_outlier, y)
+
     return x_, y_, is_outlier
 
 def find_RANSAC_outlier(regressor, x, y):
     regressor.fit(x[:, None], y)
+
     return ~regressor.inlier_mask_
 
 def find_huber_outlier(regressor, x, y):
     regressor.fit(x[:, None], y)
+
     return regressor.outliers_
 
 def plot_outliers(df):
@@ -97,7 +109,9 @@ def plot_outliers(df):
         ax = fig.add_subplot(2, 2, i+1)
 
         # Define grid
-        x, y = np.unique(df.counts.value_counts(), return_index=True)
+        df['z'] = df.coord // (1536 * 512)
+        df_ = df.groupby(['cid']).size().reset_index(name='counts')
+        x, y = np.unique(df_.counts.value_counts(), return_index=True)
         mask = (x > 1) & (y > 1)
         x, y = np.log10(x[mask]), np.log10(y[mask])
 
@@ -146,6 +160,7 @@ def plot_outliers(df):
 
         # Labels
         ax.legend()
+
         if i == 0:
             ax.set_title("No Outliers")
         elif i == 1:
@@ -156,11 +171,9 @@ def plot_outliers(df):
             ax.set_title("Huber Outliers")
         else:
             raise("Subplot id not recognized")
-        # ax.set_xlim((0, 4))
-        # ax.set_ylim((-8, 0))
 
-        ax.set_xlabel(r'$\log_{10}$ Counts')
-        ax.set_ylabel(r'$\log_{10}$ Normalized Density')
+        ax.set_xlabel(r'$\log_{10}$ R')
+        ax.set_ylabel(r'$\log_{10}$ S')
     
     file_name = f'../png/outlier_detection.png'
     plib.save_fig(fig, file_name)
@@ -172,7 +185,7 @@ def main():
     df_name = f'{src}/BOMEX_SWAMP_volume_{time:04d}.pq'
     df = pq.read_pandas(df_name).to_pandas()
 
-    df = df[df.type == 0].groupby(['cid']).size().reset_index(name='counts')
+    df = df[df.type == 0]
     plot_outliers(df)
 
 if __name__ == '__main__':

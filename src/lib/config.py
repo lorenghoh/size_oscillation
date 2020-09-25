@@ -51,7 +51,7 @@ def validate(config, output=False):
 
         # Symlink and check .pq data location
         # Replaces any existing symlink
-        pq_path = Path(pwd / "pq")
+        pq_path = Path(pwd / "data")
         if pq_path.exists():
             pq_path.unlink(missing_ok=True)
         pq_path.symlink_to(config["data"])

@@ -23,7 +23,7 @@ import lib.plot as plib
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-def get_counts(df, vol=False, return_df=False):
+def get_counts(df, vol=True, return_df=False):
     df['z'] = df.coord // (1536 * 512)
     df_ = df.groupby(['cid', 'z']).size().reset_index(name='counts')
 
@@ -41,7 +41,12 @@ def get_rank_rep(df):
     return x, y
 
 def get_extrema(pq_list):
-    maxima = np.zeros(4) # x1, y1, x2, y2
+    '''
+    Gives axis limits: 
+        [5.744 3.861 -inf 3.861 5.397 -3.321 3.861]
+
+    '''
+    maxima = np.zeros(7) # x1, y1, y2min, y2max, x3, y3min, y3max
     def _compswap(maxima, index):
         pass
 
@@ -49,14 +54,30 @@ def get_extrema(pq_list):
         df = pq.read_pandas(item).to_pandas()
 
         # Rank statistics
-        counts = get_rank_rep(df)
-        maxima[0] = np.max([])
+        x, y = get_rank_rep(df)
+        
+        maxima[0] = np.max([maxima[0], np.max(np.log10(x))])
+        maxima[1] = np.max([maxima[1], np.max(np.log10(y))])
+
+        # Cumulative rank
+        cy = np.cumsum(y[::-1])[::-1]
+        cy = cy  / cy[0] * 100
+
+        maxima[2] = np.min([maxima[0], np.min(np.log10(cy))])
+        maxima[3] = np.max([maxima[1], np.max(np.log10(cy))])
 
         # Probability density
+        counts = get_counts(df)
+
         x_grid = np.log10(np.logspace(0, np.log10(np.max(counts)), 35))
         log_kde = KernelDensity(bandwidth=1).fit(np.log(counts[:, None]))
         kde = log_kde.score_samples(x_grid[:, None])
 
+        maxima[4] = np.max([maxima[2], np.max(x_grid)])
+        maxima[5] = np.min([maxima[3], np.min(kde)])
+        maxima[6] = np.max([maxima[3], np.max(kde)])
+
+    print(maxima)
 
 def plot_scatter(time, df, init=False):
     """
@@ -68,6 +89,7 @@ def plot_scatter(time, df, init=False):
 
     #---- Plot
     fig = plib.init_plot(figsize=(9, 6))
+    fig.suptitle(f"Timestep {time:03d}", fontsize=12, y=1.02)
 
     # Plot 1: Vertical distribution
     ax1 = fig.add_subplot(221)
@@ -75,6 +97,8 @@ def plot_scatter(time, df, init=False):
     ax1.title.set_text('Vertical Size Distribution')
     ax1.set_xlabel(r'Size')
     ax1.set_ylabel(r'Altitude')
+    ax1.set_xlim([0, 600])
+    ax1.set_ylim([20, 80])
     
     # 3D cloud volumes
     # df['z'] = df.coord // (1536 * 512)
@@ -90,9 +114,12 @@ def plot_scatter(time, df, init=False):
     # Plot 2: Rank-size representation
     ax2 = fig.add_subplot(222)
 
+
     ax2.title.set_text('Rank-size Representation')
     ax2.set_xlabel(r'$\log_{10}$ R')
     ax2.set_ylabel(r'$\log_{10}$ S')
+    ax2.set_xlim([0, 4.8])
+    ax2.set_ylim([0, 4])
 
     x, y = get_rank_rep(df)
     ax2.scatter(np.log10(x), np.log10(y), marker='.')
@@ -103,6 +130,8 @@ def plot_scatter(time, df, init=False):
     ax3.title.set_text('Cumulative Represenation')
     ax3.set_xlabel(r'$\log_{10}$ R')
     ax3.set_ylabel(r'$\log_{10}$ S$_{c}$')
+    ax3.set_xlim([0, 4.8])
+    ax3.set_ylim([-3, 2.5])
     
     x, y = get_rank_rep(df)
 
@@ -112,11 +141,13 @@ def plot_scatter(time, df, init=False):
     ax3.scatter(np.log10(x), np.log10(y), marker='.')
 
     # Plot 4: PDF representation
-    ax3 = fig.add_subplot(224)
+    ax4 = fig.add_subplot(224)
 
-    ax3.title.set_text('Probability Density Representation')
-    ax3.set_xlabel(r'$\log_{10}$ Cloud Size')
-    ax3.set_ylabel(r'KDE')
+    ax4.title.set_text('Probability Density Representation')
+    ax4.set_xlabel(r'$\log_{10}$ Cloud Size')
+    ax4.set_ylabel(r'KDE')
+    ax4.set_xlim([0, 4])
+    ax4.set_ylim([-3, -1])
 
     x, y = get_rank_rep(df)
     counts = get_counts(df)
@@ -136,21 +167,22 @@ def plot_scatter(time, df, init=False):
     log_kde = KernelDensity(bandwidth=bw).fit(np.log(counts[:, None]))
     kde = log_kde.score_samples(x_grid[:, None])
 
-    ax3.plot(x_grid, kde, '-+', alpha=0.5)
+    ax4.plot(x_grid, kde, '-+', alpha=0.5)
     
     #---- Save figure
-    plt.tight_layout()
-    file_name = f"../png/{os.path.splitext(__file__)[0]}.png"
-    plib.save_fig(fig, file_name)
-    # file_name = f"../png/frame/vol_rep_{time:04d}.png"
-    # plib.save_fig(fig, file_name, print_output=False)
-    # tqdm.write(f"\t Wrote figure to {file_name}")
+    fig.tight_layout()
+
+    # file_name = f"../png/{os.path.splitext(__file__)[0]}.png"
+    # plib.save_fig(fig, file_name)
+    file_name = f"../png/frame/vol_rep_{time:04d}.png"
+    plib.save_fig(fig, file_name, print_output=False)
+    tqdm.write(f"\t Wrote figure to {file_name}")
 
 if __name__ == '__main__':
     src = Path("/users/loh/nodeSSD/temp")
 
     pq_list = sorted(src.glob('BOMEX_SWAMP_volume_*.pq'))
     # get_extrema(pq_list)
-    plot_scatter(719, pq.read_pandas(pq_list[600]).to_pandas())
-    # for t, item in enumerate(tqdm(pq_list)):
-    #     plot_scatter(t, pq.read_pandas(item).to_pandas())
+    # plot_scatter(719, pq.read_pandas(pq_list[600]).to_pandas())
+    for t, item in enumerate(tqdm(pq_list)):
+        plot_scatter(t, pq.read_pandas(item).to_pandas())

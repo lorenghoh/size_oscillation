@@ -1,9 +1,5 @@
-import os, glob
-
 import numpy as np
-import numba as nb
-import pandas as pd
-import pyarrow.parquet as pq 
+import pyarrow.parquet as pq
 
 # Scikit
 from sklearn import linear_model as lm
@@ -13,83 +9,85 @@ from sklearn.model_selection import GridSearchCV
 from get_outliers import detect_outliers
 
 from tqdm import tqdm
+from pathlib import Path
 
-import lib_plot as plib
+import lib.plot
+import lib.config
 import seaborn as sns
 
+
+config = lib.config.read_config()
+
+
 def plot_kde():
-    src = '/users/loh/nodeSSD/repos/size_oscillation'
+    src = Path(config["data"]) / "pq"
 
-    for time in tqdm(np.arange(0, 540, 5)):
-        #---- Plotting 
-        fig = plib.init_plot((5, 4))
-        ax = fig.add_subplot(111)
+    # Plotting
+    fig = lib.plot.init_plot((5, 4))
+    ax = fig.add_subplot(111)
 
-        df = pq.read_pandas(f'{src}/2d_cloud_counts_{time:03d}.pq').to_pandas()
+    df = pq.read_pandas(f"{src}/cloud_cluster_0575.pq").to_pandas()
 
-        # Define grid
-        X_ = np.logspace(0, np.log10(df.max()), 50)
-        
-        log_kde = KernelDensity(bandwidth=1).fit(df.counts[:, None])
-        kde = log_kde.score_samples(X_[:, None]) / np.log(10)
+    df["z"] = df.coord // (1536 * 512)
+    df = df.groupby(["cid", "z"]).size().reset_index(name="counts")
 
-        ax.plot(np.log10(X_), kde, '-+')
+    # Define grid
+    X_ = np.logspace(0, np.log10(df.counts.max()), 50)
 
-        # Filter outliers
-        reg_model = lm.RANSACRegressor()
-        X_, Y_ = detect_outliers(
-            reg_model,
-            np.log10(X_),
-            kde)
+    log_kde = KernelDensity(bandwidth=1).fit(df.counts[:, None])
+    kde = log_kde.score_samples(X_[:, None]) / np.log(10)
 
-        # Ridge regression
-        reg_model = lm.RidgeCV()
-        reg_model.fit(X_[:, None], Y_)
+    # ax.plot(np.log10(X_), kde, "-+")
 
-        y_reg = reg_model.predict(X_[:, None])
-        ax.plot(X_, y_reg, '--',
-                label='Linear Regression')
+    # Filter outliers
+    reg_model = lm.RANSACRegressor()
+    X_, Y_, _ = detect_outliers(reg_model, np.log10(X_), kde)
 
-        # RANSAC
-        rs_estimator = lm.RANSACRegressor()
-        rs_estimator.fit(X_[:, None], Y_)
-        y_rs = rs_estimator.estimator_.predict(X_[:, None])
-        ax.plot(X_, y_rs, '-*', c='g',
-                label='RANSAN Regression')
+    ax.plot(X_, np.gradient(np.exp(Y_)), "-+")
 
-        # Theil Sen regression
-        ts_model = lm.TheilSenRegressor(n_jobs=16)
-        ts_model.fit(X_[:, None], Y_)
-        y_ts = ts_model.predict(X_[:, None])
-        ax.plot(X_, y_ts, '-', c='k',
-                label='Theil-Sen Regression')
+    # # Ridge regression
+    # reg_model = lm.RidgeCV()
+    # reg_model.fit(X_[:, None], Y_)
 
-        # Huber regression
-        hb_model = lm.HuberRegressor(fit_intercept=False)
-        hb_model.fit(X_[:, None], Y_)
-        y_ts = hb_model.predict(X_[:, None])
-        ax.plot(X_, y_ts, '-.', c='b',
-                label='Huber Regression')
+    # y_reg = reg_model.predict(X_[:, None])
+    # ax.plot(X_, y_reg, "--", label="Linear Regression")
 
-        # Output slopes
-        tqdm.write(
-            f'{time:3d}, '
-            f'{reg_model.coef_[0]:.3f}, ' 
-            f'{rs_estimator.estimator_.coef_[0]:.3f}, '
-            f'{ts_model.coef_[0]:.3f}, ' 
-            f'{hb_model.coef_[0]:.3f}'
-        )``
+    # # RANSAC
+    # rs_estimator = lm.RANSACRegressor()
+    # rs_estimator.fit(X_[:, None], Y_)
+    # y_rs = rs_estimator.estimator_.predict(X_[:, None])
+    # ax.plot(X_, y_rs, "-*", c="g", label="RANSAN Regression")
 
-        # Labels
-        ax.legend()
-        ax.set_xlim((0, 3.5))
-        ax.set_ylim((-6, 0))
+    # # Theil Sen regression
+    # ts_model = lm.TheilSenRegressor(n_jobs=16)
+    # ts_model.fit(X_[:, None], Y_)
+    # y_ts = ts_model.predict(X_[:, None])
+    # ax.plot(X_, y_ts, "-", c="k", label="Theil-Sen Regression")
 
-        ax.set_xlabel(r'$\log_{10}$ Counts')
-        ax.set_ylabel(r'$\log_{10}$ Normalized Density')
-        
-        file_name = f'../png/temp/cloud_size_dist_{time:03d}.png'
-        plib.save_fig(fig, file_name, False)
+    # # Huber regression
+    # hb_model = lm.HuberRegressor(fit_intercept=False)
+    # hb_model.fit(X_[:, None], Y_)
+    # y_ts = hb_model.predict(X_[:, None])
+    # ax.plot(X_, y_ts, "-.", c="b", label="Huber Regression")
 
-if __name__ == '__main__':
+    # # Output slopes
+    # print(
+    #     f"{reg_model.coef_[0]:.3f}, \n"
+    #     f"{rs_estimator.estimator_.coef_[0]:.3f}, \n"
+    #     f"{ts_model.coef_[0]:.3f}, \n"
+    #     f"{hb_model.coef_[0]:.3f} \n"
+    # )
+
+    # Labels
+    # ax.legend()
+    # ax.set_xlim((0, 3.5))
+    # ax.set_ylim((-6, 0))
+
+    ax.set_xlabel(r"$\log_{10}$ Counts")
+    ax.set_ylabel(r"$\log_{10}$ Normalized Density")
+
+    lib.plot.save_fig(fig, Path(__file__))
+
+
+if __name__ == "__main__":
     plot_kde()
