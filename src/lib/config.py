@@ -11,7 +11,7 @@ def create_template():
     with open(pwd / "config.json", "w") as json_file:
         config = {
             "pwd": pwd.as_posix(),
-            "data": "",
+            "case": "",
             "output": "",
         }
         json.dump(config, json_file, indent=4)
@@ -27,7 +27,7 @@ def read_config():
     except FileNotFoundError:
         create_template()
 
-        print("Created default configuration file config.json. Modify as needed. \n")
+        print("Created default configuration file config.json. Modify as needed, then re-run the configuration module. \n")
     except ValueError:
         Path(pwd / "config.json").unlink()
 
@@ -54,9 +54,9 @@ def validate(config, output=False):
         pq_path = Path(pwd / 'clusters')
         if pq_path.exists():
             pq_path.unlink(missing_ok=True)
-        pq_path.symlink_to(config['clusters'])
+        pq_path.symlink_to(Path(config['case']) / 'clusters')
 
-        if Path(config['clusters']).exists():
+        if (Path(config['case']) / 'clusters').exists():
             if output is True:
                 print("Found the following data entries: ")
 
