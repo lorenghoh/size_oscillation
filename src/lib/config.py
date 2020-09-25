@@ -22,6 +22,8 @@ def read_config():
         with open(pwd / "config.json", "r") as json_file:
             config = json.load(json_file)
             validate(config)
+        
+            return config
     except FileNotFoundError:
         create_template()
 
@@ -30,8 +32,6 @@ def read_config():
         Path(pwd / "config.json").unlink()
 
         print("Could not resolve config.json. Re-run configuration.")
-    finally:
-        return config
 
 
 def validate(config, output=False):
@@ -45,31 +45,39 @@ def validate(config, output=False):
             raise FileNotFoundError
 
         # Create required sub-folders
-        for item in ["notebook", "png"]:
-            sub_path = Path(config["pwd"]) / item
+        for item in ['notebook', 'png', 'figure']:
+            sub_path = Path(pwd) / item
             sub_path.mkdir(exist_ok=True)
 
         # Symlink and check .pq data location
         # Replaces any existing symlink
-        pq_path = Path(pwd / "data")
+        pq_path = Path(pwd / 'clusters')
         if pq_path.exists():
             pq_path.unlink(missing_ok=True)
-        pq_path.symlink_to(config["data"])
+        pq_path.symlink_to(config['clusters'])
 
-        if Path(config["data"]).exists():
+        if Path(config['clusters']).exists():
             if output is True:
                 print("Found the following data entries: ")
 
                 for item in sorted(pq_path.glob("*")):
                     print(f"\t {item.name}")
-
                 print()
         else:
             raise FileNotFoundError
+
+        # Resolve output folder path
+        out_path = config['output']
+        if out_path.strip() == '':
+            Path(pwd / 'output').mkdir(exist_ok=True)
+        else:
+            out_path = Path(out_path)
+            if out_path.exists():
+                pass
+            else:
+                raise FileNotFoundError
     except FileNotFoundError:
         print("Config dictionary contains unresolvable path(s). \n")
-
-    # TODO: need a flag for symlink validation
 
 
 if __name__ == "__main__":

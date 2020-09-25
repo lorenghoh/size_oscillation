@@ -1,5 +1,6 @@
-# Symlink to data folder
-data
+# Symlinks
+clusters
+output
 
 # Binary data files
 *.nc
