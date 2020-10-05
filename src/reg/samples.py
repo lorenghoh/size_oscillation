@@ -41,7 +41,3 @@ def cloud_volume(pq_path):
     df = get_pq(pq_path)
 
     return df.cid.value_counts().values
-
-
-if __name__ == '__main__':
-    cluster_list = sorted(src.glob('*'))

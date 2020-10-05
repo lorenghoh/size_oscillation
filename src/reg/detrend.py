@@ -47,7 +47,3 @@ def main():
 
     file_name = f"../png/{os.path.splitext(__file__)[0]}.png"
     plib.save_fig(fig, file_name)
-
-
-if __name__ == "__main__":
-    main()

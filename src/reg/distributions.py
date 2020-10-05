@@ -8,15 +8,15 @@ from tqdm import tqdm
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 
-import lib.config
-import lib.case
+from ..lib.config import read_config
+from ..lib.case import Model
 
 
-config = lib.config.read_config()
+config = read_config()
 pwd = Path(config['pwd'])
 src = Path(config['case']) / 'clusters'
 
-model = lib.case.Model()
+model = Model()
 
 
 def rank(samples):
@@ -32,7 +32,3 @@ def kde(samples):
     kde = log_kde.score_samples(x_grid[:, None]) / np.log(10)
 
     return x_grid, kde
-
-
-if __name__ == '__main__':
-    cluster_list = sorted(src.glob('*'))
