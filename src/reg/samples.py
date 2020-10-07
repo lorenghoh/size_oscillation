@@ -27,7 +27,8 @@ def cloud_dz(pq_path):
     df = get_pq(pq_path)
     df = df.groupby(['cid', 'z']).size().reset_index(name='counts')
 
-    return df.counts.value_counts().values
+    df.counts = df.counts * model.dx * model.dy
+    return df.counts.value_counts().to_numpy()
 
 
 def cloud_projection(pq_path):
@@ -40,4 +41,4 @@ def cloud_projection(pq_path):
 def cloud_volume(pq_path):
     df = get_pq(pq_path)
 
-    return df.cid.value_counts().values
+    return df.cid.value_counts()
