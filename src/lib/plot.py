@@ -21,12 +21,13 @@ def close_fig(fig):
     plt.close(fig)
 
 
-def save_fig(fig, file_path, print_output=True):
-    # file_name = file_path.with_suffix(".png").name
-    # png_dir = Path(__file__).parents[2] / "png"
+def save_fig(fig, file_path, print_output=True, rename_fig=True):
+    if rename_fig:
+        file_name = file_path.with_suffix(".png").name
+        png_dir = Path(__file__).parents[2] / "png"
 
-    # if print_output:
-    #     print(f"\t Writing figure to {png_dir}/{file_name}...")
+    if print_output:
+        print(f"\t Writing figure to {png_dir}/{file_name}...")
 
     fig.tight_layout(pad=0.5)
     fig.savefig(
