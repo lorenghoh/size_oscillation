@@ -19,8 +19,12 @@ src = Path(config['case']) / 'clusters'
 model = Model()
 
 
-def rank(samples):
+def rank(samples, log=True):
     rank, size = np.unique(samples, return_index=True)
+
+    if log:
+        mask = (rank > 0) & (size > 0)
+        return np.log10(rank[mask]), np.log10(size[mask])
 
     return rank, size
 
