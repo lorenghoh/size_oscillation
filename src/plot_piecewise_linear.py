@@ -21,7 +21,8 @@ try:
 
     from reg.outliers import detect_outliers
     from reg.samples import cloud_dz as sample
-    from reg.distributions import kde as distribution
+    from reg.distributions import rank as distribution
+    from reg.slopes import piecewise_linear as slope
 except Exception:
     raise Exception("Issue with dynamic import")
 
@@ -35,17 +36,7 @@ def plot_piecewise_linear(x, y):
     fig = plib.init_plot((6, 4))
     ax = fig.add_subplot(111)
 
-    tree = DecisionTreeRegressor(max_leaf_nodes=2)
-    tree.fit(x[:, None], np.gradient(y[:None]))
-    dys_dt = tree.predict(x[:, None]).flatten()
-
-    # Point of inflection. We are assuming two piecewise-linear
-    # curves, so the first index will be the point of inflection
-    pt_in = np.unique(dys_dt, return_index=True)[-1][0]
-
-    # Regression
-    linreg = lm.TheilSenRegressor()
-    linreg.fit(x[pt_in:, None], y[pt_in:])
+    linreg = slope(x, y, return_reg=True)
     y_rs = linreg.predict(x[:, None])
 
     print(linreg.coef_)
@@ -66,10 +57,6 @@ def main():
 
     samples = sample(cluster)
     x, y = distribution(samples)
-
-    mask = (y > -10)
-    x = x[mask]
-    y = y[mask]
 
     plot_piecewise_linear(x, y)
 
