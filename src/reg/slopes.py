@@ -33,7 +33,7 @@ def piecewise_linear(x, y, max_n=2, return_reg=False):
     y_seg = y[pt_in[pt_b]:pt_in[pt_b + 1]]
 
     # Regression
-    reg = lm.RidgeCV()
+    reg = lm.TheilSenRegressor()
     reg.fit(x_seg[:, None], y_seg)
 
     if return_reg:
