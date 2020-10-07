@@ -20,8 +20,8 @@ pwd = Path(config['pwd'])
 
 
 def piecewise_linear(x, y, max_n=2, return_reg=False):
-    tree = DecisionTreeRegressor(max_leaf_nodes=2)
-    tree.fit(x[:, None], np.gradient(y[:None]))
+    tree = DecisionTreeRegressor(max_leaf_nodes=max_n)
+    tree.fit(x[:, None], np.gradient(y))
     dys_dt = tree.predict(x[:, None]).flatten()
 
     pt_in = np.unique(dys_dt, return_index=True)[-1]
