@@ -8,8 +8,8 @@ from tqdm import tqdm
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 
-from ..lib.config import read_config
-from ..lib.case import Model
+from lib.config import read_config
+from lib.case import Model
 
 
 config = read_config()
