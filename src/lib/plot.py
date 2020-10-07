@@ -17,16 +17,20 @@ def init_plot(figsize=(12, 4)):
     return fig
 
 
-def save_fig(fig, file_path, print_output=True):
-    file_name = file_path.with_suffix(".png").name
-    png_dir = Path(__file__).parents[2] / "png"
+def close_fig(fig):
+    plt.close(fig)
 
-    if print_output:
-        print(f"\t Writing figure to {png_dir}/{file_name}...")
+
+def save_fig(fig, file_path, print_output=True):
+    # file_name = file_path.with_suffix(".png").name
+    # png_dir = Path(__file__).parents[2] / "png"
+
+    # if print_output:
+    #     print(f"\t Writing figure to {png_dir}/{file_name}...")
 
     fig.tight_layout(pad=0.5)
     fig.savefig(
-        Path(png_dir / file_name), 
+        Path(file_path), 
         bbox_inches="tight", 
         dpi=180, 
         facecolor="w", 
