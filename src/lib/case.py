@@ -13,6 +13,9 @@ src = Path(config['case'])
 @dataclass
 class Model:
     case_name: str
+    dx: int
+    dy: int
+    dz: int
     nx: int
     ny: int
     nz: int
@@ -20,6 +23,9 @@ class Model:
     def __init__(self):
         with xr.open_dataset(src / 'CGILS_1728x576x192_25m_1s_ent.nc') as df:
             self.case_name = 'CGILS'
+            self.dx = 25
+            self.dy = 25
+            self.dz = 25
             self.nx = 1728
             self.ny = 576
             self.nz = 192
