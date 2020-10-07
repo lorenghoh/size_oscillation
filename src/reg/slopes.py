@@ -19,7 +19,30 @@ config = lib.config.read_config()
 pwd = Path(config['pwd'])
 
 
-def regressor(x, y, model='RidgeCV', remove_outlier=False):
+def piecewise_linear(x, y, max_n=2, return_reg=False):
+    tree = DecisionTreeRegressor(max_leaf_nodes=2)
+    tree.fit(x[:, None], np.gradient(y[:None]))
+    dys_dt = tree.predict(x[:, None]).flatten()
+
+    pt_in = np.unique(dys_dt, return_index=True)[-1]
+    pt_in = np.append(pt_in, len(dys_dt))
+
+    # Find the longest segment for regression
+    pt_b = np.argmax(pt_in[1:] - pt_in[:-1])
+    x_seg = x[pt_in[pt_b]:pt_in[pt_b + 1]]
+    y_seg = y[pt_in[pt_b]:pt_in[pt_b + 1]]
+
+    # Regression
+    reg = lm.RidgeCV()
+    reg.fit(x_seg[:, None], y_seg)
+
+    if return_reg:
+        return reg
+
+    return reg.coef_.item()
+
+
+def regressor(x, y, model='RidgeCV', remove_outlier=False, return_reg=False):
     if remove_outlier:
         x, y, mask = detect_outliers(None, x, y)
 
@@ -29,23 +52,12 @@ def regressor(x, y, model='RidgeCV', remove_outlier=False):
         reg = lm.RANSACRegressor()
     elif model == 'TheilSen':
         reg = lm.TheilSenRegressor()
-    elif model == 'Piecewise':
-        tree = DecisionTreeRegressor(max_leaf_nodes=2)
-        tree.fit(x[:, None], np.gradient(y[:None]))
-        dys_dt = tree.predict(x[:, None]).flatten()
-
-        # Point of inflection. We are assuming two piecewise-linear
-        # curves, so the first index will be the point of inflection
-        pt_in = np.unique(dys_dt, return_index=True)[-1][0]
-
-        # Regression
-        linreg = lm.RidgeCV()
-        linreg.fit(x[pt_in:, None], y[pt_in:])
-
-        return linreg.coef_.item
     else:
         raise ValueError("Regression model not found.")
     reg.fit(x[:, None], y)
+
+    if return_reg:
+        return reg
 
     return reg.coef_.item()
 
