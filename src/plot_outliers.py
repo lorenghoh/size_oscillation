@@ -17,8 +17,8 @@ try:
     import lib.config
 
     from reg.outliers import detect_outliers
-    from reg.samples import get_pq
-    from reg.distributions import rank as distribution
+    from reg.samples import cloud_dz as sample
+    from reg.distributions import kde as distribution
     from reg.slopes import regressor as reg
 except Exception:
     raise Exception("Issue with dynamic import")
@@ -28,19 +28,9 @@ pwd = Path(config['pwd'])
 src = Path(config['case']) / 'clusters'
 
 
-def plot_outliers(df):
+def plot_outliers(x, y):
     # ---- Plotting
     fig = plib.init_plot((8, 6))
-
-    # mask = (x > 1) & (y > 1)
-    # x, y = np.log10(x[mask]), np.log10(y[mask])
-
-    df = df.groupby(['cid', 'z']).size().reset_index(name='counts')
-
-    x = np.logspace(0, np.log10(df.counts.max()), 50)
-
-    log_kde = KernelDensity(bandwidth=10).fit(np.array(df.counts)[:, None])
-    y = log_kde.score_samples(x[:, None]) / np.log(10)
 
     for i in range(4):
         ax = fig.add_subplot(2, 2, i + 1)
@@ -56,33 +46,33 @@ def plot_outliers(df):
             else:
                 raise ValueError
         except ValueError:
-            ax.plot(np.log10(x[:, None]), y, "k-*", lw=0.5)
-            X_, Y_, = np.log10(x), y
+            ax.plot(np.array(x[:, None]), y, "k-*", lw=0.5)
+            X_, Y_, = np.array(x), y
         else:
-            X_, Y_, mask_ = detect_outliers(regressor, np.log10(x), y)
+            X_, Y_, mask_ = detect_outliers(regressor, np.array(x), y)
 
             # Print in/outliers
-            ax.plot(np.log10(x[:, None]), y[:], "k-", lw=0.5)
-            ax.plot(np.log10(x[~mask_, None]), y[~mask_], "*", c="k")
-            ax.plot(np.log10(x[mask_, None]), y[mask_], "*", c="r")
+            ax.plot(np.array(x[:, None]), y[:], "k-", lw=0.5)
+            ax.plot(np.array(x[~mask_, None]), y[~mask_], "*", c="k")
+            ax.plot(np.array(x[mask_, None]), y[mask_], "*", c="r")
 
         # RANSAC
         rs_estimator = lm.RANSACRegressor()
         rs_estimator.fit(X_[:, None], Y_)
-        y_rs = rs_estimator.estimator_.predict(np.log10(x)[:, None])
-        ax.plot(np.log10(x), y_rs, "-", label="RANSAC")
+        y_rs = rs_estimator.estimator_.predict(np.array(x)[:, None])
+        ax.plot(np.array(x), y_rs, "-", label="RANSAC")
 
         # Theil Sen regression
         ts_model = lm.TheilSenRegressor(n_jobs=16)
         ts_model.fit(X_[:, None], Y_)
-        y_ts = ts_model.predict(np.log10(x)[:, None])
-        ax.plot(np.log10(x), y_ts, "--", label="Theil-Sen")
+        y_ts = ts_model.predict(np.array(x)[:, None])
+        ax.plot(np.array(x), y_ts, "--", label="Theil-Sen")
 
         # Huber regression
         hb_model = lm.HuberRegressor()
         hb_model.fit(X_[:, None], Y_)
-        y_hb = hb_model.predict(np.log10(x)[:, None])
-        ax.plot(np.log10(x), y_hb, "-.", label="Huber")
+        y_hb = hb_model.predict(np.array(x)[:, None])
+        ax.plot(np.array(x), y_hb, "-.", label="Huber")
 
         # Labels
         ax.legend()
@@ -100,7 +90,7 @@ def plot_outliers(df):
 
         ax.set_xlabel(r"$\log_{10}$ R")
         ax.set_ylabel(r"$\log_{10}$ S")
-        ax.set_ylim([-10, 1])
+        # ax.set_ylim([-10, 1])
 
     file_name = Path(f"{pwd}/png/outlier_detection.png")
     plib.save_fig(fig, file_name)
@@ -110,8 +100,14 @@ def main():
     cluster_list = sorted(src.glob('*.pq'))
     cluster = cluster_list[-1]
 
-    df = get_pq(cluster)
-    plot_outliers(df)
+    samples = sample(cluster)
+    x, y = distribution(samples)
+
+    # mask = (y > -100) 
+    # x = x[mask]
+    # y = y[mask]
+
+    plot_outliers(x, y)
 
 
 if __name__ == "__main__":
