@@ -16,8 +16,16 @@ src = Path(config['case']) / 'clusters'
 model = case.Model()
 
 
-def get_pq(pq_path):
+def get_pq(pq_path, type='cloud'):
     df = pq.read_pandas(pq_path).to_pandas()
+
+    if type == 'cloud':
+        df = df[df.type == 0]
+    elif type == 'core':
+        df = df[df.type == 1]
+    else:
+        raise TypeError("Sample type not recognized")
+
     df['z'] = df.coord // (model.nx * model.ny)
 
     return df
