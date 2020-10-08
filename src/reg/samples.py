@@ -16,12 +16,12 @@ src = Path(config['case']) / 'clusters'
 model = case.Model()
 
 
-def get_pq(pq_path, type='cloud'):
+def get_pq(pq_path, ctype='cloud'):
     df = pq.read_pandas(pq_path).to_pandas()
 
-    if type == 'cloud':
+    if ctype == 'cloud':
         df = df[df.type == 0]
-    elif type == 'core':
+    elif ctype == 'core':
         df = df[df.type == 1]
     else:
         raise TypeError("Sample type not recognized")
@@ -31,8 +31,8 @@ def get_pq(pq_path, type='cloud'):
     return df
 
 
-def cloud_dz(pq_path):
-    df = get_pq(pq_path)
+def cloud_dz(pq_path, ctype='cloud'):
+    df = get_pq(pq_path, ctype)
     df = df.groupby(['cid', 'z']).size().reset_index(name='counts')
 
     df.counts = df.counts * model.dx * model.dy
