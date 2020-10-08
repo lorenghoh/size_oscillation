@@ -42,7 +42,7 @@ def piecewise_linear(x, y, max_n=2, return_reg=False):
     return reg.coef_.item()
 
 
-def regressor(x, y, model='RidgeCV', remove_outlier=False, return_reg=False):
+def linreg(x, y, model='RANSAC', remove_outlier=False, return_reg=False):
     if remove_outlier:
         x, y, mask = detect_outliers(None, x, y)
 

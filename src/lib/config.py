@@ -45,7 +45,7 @@ def validate(config, output=False):
             raise FileNotFoundError
 
         # Create required sub-folders
-        for item in ['notebook', 'png', 'figure']:
+        for item in ['notebook', 'png']:
             sub_path = Path(pwd) / item
             sub_path.mkdir(exist_ok=True)
 
