@@ -24,7 +24,8 @@ def piecewise_linear(x, y, max_n=2, return_reg=False):
     tree.fit(x[:, None], np.gradient(y))
     dys_dt = tree.predict(x[:, None]).flatten()
     
-    pt_in = np.unique(dys_dt, return_index=True)[-1]
+    _, ind, c = np.unique(dys_dt, return_index=True, return_counts=True)
+    pt_in = ind[np.argsort(c)][::-1]
     pt_in = np.append(pt_in, len(dys_dt))
     
     # Find the longest segment for regression
