@@ -41,7 +41,7 @@ def main():
         x, y = distribution(samples)
         s = get_slope_piecewise(x, y)
 
-        tqdm.write(f"{s}")
+        tqdm.write(f"{s:.3f}")
         s_list.append(s)
 
     df = pd.DataFrame(s_list, columns=['slope'])
