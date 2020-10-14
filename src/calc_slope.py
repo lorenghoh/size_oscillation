@@ -45,7 +45,7 @@ def main():
         s_list.append(s)
 
     df = pd.DataFrame(s_list, columns=['slope'])
-    df.to_parquet(f"{pwd}/output/slope_CGILS_S6_COR_RANK_PIECEWISE.pq")
+    df.to_parquet(f"{pwd}/output/slope_CGILS_S6_COR_KDE_PIECEWISE.pq")
 
 
 if __name__ == '__main__':
