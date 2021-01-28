@@ -11,6 +11,7 @@ output
 *.png
 *.mp4
 *.gif
+*.pdf
 
 *.pbs
 *.lprof
