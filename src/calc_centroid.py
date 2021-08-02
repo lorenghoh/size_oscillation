@@ -24,32 +24,43 @@ src = Path(config["case"]) / "clusters"
 def coord_to_zxy_cols(df):
     index = df.coord.values
 
-    # Model parameters from CGILS_S6 run
-    nx, ny = 1728, 576
-
-    df['z'] = index // (ny * nx)
-    index = index % (ny * nx)
-
-    df['y'] = index // nx
-    df['x'] = index % nx
+    # TODO: Now that this is vectorized, I can speed up the post-processing
+    df['z'], df['y'], df['x'] = np.unravel_index(index, (192, 512, 1536))
 
     return df
 
 
-def main():
+def calc_centroid(df):
+    df = df[df.type == 1].copy()  # Cloud core
+    df = coord_to_zxy_cols((df))
+    
+    # Find 2D projections
+    # df = df.drop_duplicates(subset=['y', 'x'])
+    
+    df = df.groupby('cid').filter(lambda x: len(x) > 24)
+
+    i = 0
+    for item in df.groupby(['cid']):
+        print(item)
+        i += 1
+
+        if i > 5:
+            break
+    raise
+
+    df = df.groupby('cid').filter(lambda x: len(x) > 8)
+    df = df.groupby('cid').agg(
+        y=('y', 'mean'),
+        x=('x', 'mean')
+    ).reset_index()
+
+    return df
+
+
+if __name__ == "__main__":
     cluster_list = sorted(src.glob("*"))
     item = cluster_list[139]
 
     df = pd.read_parquet(item)
-    df = df[df.type == 1]  # Cloud core
 
-    print(coord_to_zxy_cols(df))
-
-    return
-
-    df = pd.DataFrame(s_list, columns=["slope"])
-    df.to_parquet(f"{pwd}/output/slope_CGILS_S6_COR_KDE_PIECEWISE.pq")
-
-
-if __name__ == "__main__":
-    main()
+    print(calc_centroid(df))
