@@ -45,8 +45,8 @@ def plot_piecewise_linear(x, y):
     ax.plot(x, y, '*')
     ax.plot(x, y_rs, "-", label="RANSAC")
 
-    ax.set_xlabel(r"$\log_{10}$ R")
-    ax.set_ylabel(r"$\log_{10}$ S")
+    ax.set_xlabel(r"$\log_{10}$ R", fontsize=14)
+    ax.set_ylabel(r"$\log_{10}$ S", fontsize=14)
 
     # Subplot 2: decision tree
     ax = fig.add_subplot(212)
@@ -59,8 +59,8 @@ def plot_piecewise_linear(x, y):
     ax.plot(x, dy, '.')
     ax.plot(x, dys_dt, '*')
 
-    ax.set_xlabel(r"$\log_{10}$ R")
-    ax.set_ylabel(r"$\delta$ $\log_{10}$ S")
+    ax.set_xlabel(r"$\log_{10}$ R", fontsize=14)
+    ax.set_ylabel(r"$\delta$ $\log_{10}$ S", fontsize=14)
 
     file_name = Path(f"{pwd}/png/piecewise_linear_fit.png")
     plib.save_fig(fig, file_name)
@@ -68,7 +68,7 @@ def plot_piecewise_linear(x, y):
 
 def main():
     cluster_list = sorted(src.glob('*.pq'))
-    cluster = cluster_list[-300]
+    cluster = cluster_list[-360]
 
     samples = sample(cluster)
     x, y = distribution(samples)
