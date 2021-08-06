@@ -1,64 +1,59 @@
-import os, glob
-
+import warnings
 import numpy as np
-import numba as nb
-import pandas as pd
-import pyarrow.parquet as pq
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+from pathlib import Path
 import seaborn as sns
 
-# Scikit
-from sklearn import linear_model as lm
-from sklearn.model_selection import GridSearchCV
-from sklearn.neighbors import KernelDensity
+from scipy import stats
 
-def plot_kde():
-    src = '/users/loh/nodeSSD/repos/size_oscillation'
+# Set-up local (and temporary) sys.path for import
+# All scripts for calculations and plots need this
+from context import add_path
+add_path(Path('.').resolve())
 
-    #---- Plotting 
-    fig = plt.figure(1, figsize=(5, 4))
-    fig.clf()
-    sns.set_context('paper')
-    sns.set_style('ticks', 
-        {
-            'axes.grid': False,
-            'axes.linewidth': '0.75',
-            'grid.color': '0.75',
-            'grid.linestyle': u':',
-            'legend.frameon': True,
-        })
-    plt.rc('text', usetex=True)
-    plt.rc('font', family='Serif')
+try:
+    import lib.plot as plib
+    import lib.config
 
-    ax = plt.subplot(1, 1, 1)
-    df = pq.read_pandas(f'{src}/2d_cloud_counts_470.pq').to_pandas()
+    from reg.outliers import detect_outliers
+    from reg.samples import cloud_dz as sample
+    from reg.distributions import rank
+    from reg.distributions import kde
+    from reg.slopes import piecewise_linear as slope
+except Exception:
+    raise Exception("Issue with dynamic import")
 
-    # Define grid for Kernel Density Estimate
-    X_ = np.linspace(1, df.max(), 400)
-    bins = np.linspace(1, df.max(), 80)
+config = lib.config.read_config()
+pwd = Path(config['pwd'])
+src = Path(config['case']) / 'clusters'
 
-    log_kde = KernelDensity(bandwidth=40).fit(df.counts[:, None])
-    kde = np.exp(log_kde.score_samples(X_[:, None]))
 
-    plt.plot(X_, kde, '-+', label='Gaussian KDE')
-    plt.hist(df.counts, bins=bins, log=True,
-             histtype=u'step', density=True, label='Histogram')
+def plot_hist_kde(x, y, r, s, samples):
+    # ---- Plotting
+    fig = plib.init_plot((7, 6))
+    ax = fig.add_subplot(111)
 
-    # Labels
-    plt.legend()
-    ax.set_xscale('log')
+    ax.plot(x, y, '*')
 
-    ax.set_xlabel(r'Area')
-    ax.set_ylabel(r'Normalized Density')
-    
-    plt.tight_layout(pad=0.5)
-    figfile = '../png/{}_BOMEX_BOWL.png'.format(os.path.splitext(__file__)[0])
-    print('\t Writing figure to {}...'.format(figfile))
-    plt.savefig(figfile,bbox_inches='tight', dpi=180, \
-                facecolor='w', transparent=True)
+    h = np.histogram(samples)
 
-if __name__ == '__main__':
-    plot_kde()
+    ax.set_xlabel(r"$\log_{10}$ R", fontsize=12)
+    ax.set_ylabel(r"Normalized $\log_{10}$ S", fontsize=12)
+
+    file_name = Path(f"{pwd}/png/kde_vs_hist.png")
+    plib.save_fig(fig, file_name)
+
+
+def main():
+    cluster_list = sorted(src.glob('*.pq'))
+    cluster = cluster_list[-360]
+
+    samples = sample(cluster)
+    x, y = kde(samples)
+    r, s = rank(samples)
+
+    plot_hist_kde(x, y, r, s, samples)
+
+
+if __name__ == "__main__":
+    main()
