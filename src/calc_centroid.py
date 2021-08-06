@@ -35,19 +35,8 @@ def calc_centroid(df):
     df = coord_to_zxy_cols((df))
     
     # Find 2D projections
-    # df = df.drop_duplicates(subset=['y', 'x'])
+    df = df.drop_duplicates(subset=['y', 'x'])
     
-    df = df.groupby('cid').filter(lambda x: len(x) > 24)
-
-    i = 0
-    for item in df.groupby(['cid']):
-        print(item)
-        i += 1
-
-        if i > 5:
-            break
-    raise
-
     df = df.groupby('cid').filter(lambda x: len(x) > 8)
     df = df.groupby('cid').agg(
         y=('y', 'mean'),
