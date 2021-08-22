@@ -53,11 +53,4 @@ if __name__ == "__main__":
     df = find_centroid(df)
 
     arr = np.array([df.x.values, df.y.values])
-
-    import time
-
-    stime = time.process_time()
-
-    print(dist.calc_pdist_pb(arr, arr))
-
-    print(time.process_time() - stime)
+    print(np.tril(dist.calc_pdist_pb(arr, arr)))
