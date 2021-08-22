@@ -47,8 +47,8 @@ def find_pb_clusters(df, nx=1536, ny=512):
     and y boundaries (x = 0 and y = 0) and see if cloud regions can be
     found on the other side of the domain (nx - 1 and ny - 1).
 
-    TODO: Unfortunately, it is not yet too useful since most of the
-    utility functions do not work with the periodic boundary conditions.
+    Unfortunately, it is not yet too useful at this point since most of 
+    the utility functions do not work with periodic boundary conditions.
 
     Returns
     -------
@@ -70,7 +70,7 @@ def find_pb_clusters(df, nx=1536, ny=512):
     # Repeat for y-axis boundaries
     y_cid = df[df.y == 0].cid.unique()
     for uid in y_cid:
-        # List of x-positions at x-axis boundary
+        # List of x-positions at y-axis boundary
         _df = df[(df.cid == uid) & (df.y == 0)][["z", "y", "x"]]
         _df.loc[df.x == 0, "y"] = ny - 1
 
