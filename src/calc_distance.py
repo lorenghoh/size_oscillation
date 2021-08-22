@@ -39,6 +39,47 @@ def find_centroid(df):
     return df
 
 
+def find_pb_clusters(df, nx=1536, ny=512):
+    """
+    Re-index cloud ids returned from measure.label. Because the clouds
+    domain is governed by doubly-periodic boundary conditions, a small
+    number of clouds will cross the boundary. The function looks at x
+    and y boundaries (x = 0 and y = 0) and see if cloud regions can be
+    found on the other side of the domain (nx - 1 and ny - 1).
+
+    TODO: Unfortunately, it is not yet too useful since most of the
+    utility functions do not work with the periodic boundary conditions.
+
+    Returns
+    -------
+    df : Pandas Dataframe
+        Dataframe with updated cids
+
+    """
+
+    # First check x-axis boundaries
+    x_cid = df[df.x == 0].cid.unique()
+    for uid in x_cid:
+        # List of y-positions at x-axis boundary
+        _df = df[(df.cid == uid) & (df.x == 0)][["z", "y", "x"]]
+        _df.loc[df.x == 0, "x"] = nx - 1
+
+        _id = pd.merge(df, _df, on=["z", "y", "x"]).cid.unique()
+        df.loc[df.cid.isin(_id), "cid"] = uid
+
+    # Repeat for y-axis boundaries
+    y_cid = df[df.y == 0].cid.unique()
+    for uid in y_cid:
+        # List of x-positions at x-axis boundary
+        _df = df[(df.cid == uid) & (df.y == 0)][["z", "y", "x"]]
+        _df.loc[df.x == 0, "y"] = ny - 1
+
+        _id = pd.merge(df, _df, on=["z", "y", "x"]).cid.unique()
+        df.loc[df.cid.isin(_id), "cid"] = uid
+
+    return df
+
+
 if __name__ == "__main__":
     cluster_list = sorted(src.glob("*"))
     item = cluster_list[139]
@@ -50,7 +91,7 @@ if __name__ == "__main__":
 
     # Find 2D projections
     df = df.drop_duplicates(subset=["y", "x"])
-    df = find_centroid(df)
+    df = find_centroid(find_pb_clusters(df))
 
     arr = np.array([df.x.values, df.y.values])
     tril = np.tril(dist.calc_pdist_pb(arr, arr))
