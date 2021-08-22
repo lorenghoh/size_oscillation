@@ -53,4 +53,5 @@ if __name__ == "__main__":
     df = find_centroid(df)
 
     arr = np.array([df.x.values, df.y.values])
-    print(np.tril(dist.calc_pdist_pb(arr, arr)))
+    tril = np.tril(dist.calc_pdist_pb(arr, arr))
+    print(tril)
