@@ -51,12 +51,13 @@ if __name__ == "__main__":
     # Find 2D projections
     df = df.drop_duplicates(subset=["y", "x"])
     df = find_centroid(df)
-    
+
     arr = np.array([df.x.values, df.y.values])
 
     import time
+
     stime = time.process_time()
 
     print(dist.calc_pdist_pb(arr, arr))
- 
+
     print(time.process_time() - stime)
