@@ -41,13 +41,13 @@ def find_centroid(df):
 
 def find_pb_clusters(df, nx=1536, ny=512):
     """
-    Re-index cloud ids returned from measure.label. Because the clouds
+    Re-index cloud ids returned from measure.label. Because the cloud
     domain is governed by doubly-periodic boundary conditions, a small
     number of clouds will cross the boundary. The function looks at x
     and y boundaries (x = 0 and y = 0) and see if cloud regions can be
     found on the other side of the domain (nx - 1 and ny - 1).
 
-    Unfortunately, it is not yet too useful at this point since most of 
+    Unfortunately, it is not yet too useful at this point since most of
     the utility functions do not work with periodic boundary conditions.
 
     Returns
