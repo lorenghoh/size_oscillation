@@ -2,7 +2,7 @@ import numpy as np
 import numba as nb
 
 
-@nb.jit(nopython=True, fastmath=True)
+@nb.njit(fastmath=True)
 def calc_pdist(x, y):
     pdist = np.zeros((len(x), len(y)))
 
@@ -16,12 +16,12 @@ def calc_pdist(x, y):
     return pdist
 
 
-@nb.jit(nopython=True, fastmath=True)
+@nb.njit(fastmath=True)
 def _ad(a, b):
     return np.abs(a - b)
 
 
-@nb.jit(nopython=True, fastmath=True)
+@nb.njit(fastmath=True)
 def calc_pdist_pb(a, b, nx=1536, ny=512):
     pdist = np.zeros((a.shape[1], b.shape[1]))
 
