@@ -44,7 +44,7 @@ def save_fig(fig, file_path, print_output=True, rename_fig=True):
         png_dir = Path(__file__).parents[2] / "png"
 
     if print_output:
-        print(f"\t Writing figure to {png_dir}/{file_name}...")
+        print(f"Writing figure to {png_dir}/{file_name}")
 
     fig.tight_layout(pad=0.5)
     fig.savefig(
