@@ -16,7 +16,7 @@ from context import add_path
 add_path(Path('.').resolve())
 
 try:
-    import lib.plot as plib
+    import lib.plot as pl
     import lib.config
 
     from reg.outliers import detect_outliers
@@ -33,7 +33,7 @@ src = Path(config['case']) / 'clusters'
 
 def plot_piecewise_linear(x, y):
     # ---- Plotting
-    fig = plib.init_plot((6, 8))
+    fig = pl.init_plot((6, 8))
     ax = fig.add_subplot(211)
 
     # Subplot 1: slope
@@ -57,13 +57,13 @@ def plot_piecewise_linear(x, y):
     dys_dt = tree.predict(x[:, None]).flatten()
 
     ax.plot(x, dy, '.')
-    ax.plot(x, dys_dt, '*')
+    ax.plot(x, dys_dt, '*', ms=5)
 
     ax.set_xlabel(r"$\log_{10}$ R", fontsize=14)
     ax.set_ylabel(r"$\delta$ $\log_{10}$ S", fontsize=14)
 
     file_name = Path(f"{pwd}/png/piecewise_linear_fit.png")
-    plib.save_fig(fig, file_name)
+    pl.save_fig(fig, file_name)
 
 
 def main():
