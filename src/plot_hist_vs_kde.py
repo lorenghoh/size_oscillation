@@ -28,17 +28,17 @@ src = Path(config["case"]) / "clusters"
 
 def plot_hist_kde(samples):
     # ---- Plotting
-    fig = pl.init_plot((7, 6))
+    fig = pl.init_plot((6, 5))
 
     ax = fig.add_subplot(111)
-    
+
     # KDE
     x = np.log10(np.logspace(3, np.log10(np.max(samples)), 30))
 
     log_kde = KernelDensity(bandwidth=0.4).fit(np.log10(samples[:, None]))
     y = log_kde.score_samples(x[:, None]) / np.log(10)
 
-    ax.plot(x, y)
+    ax.plot(x, y, lw=1.5, color="C1")
 
     samples = samples[samples > 1e3]
     bins = np.log10(np.logspace(3, np.log10(np.max(samples)), 9))
@@ -46,13 +46,18 @@ def plot_hist_kde(samples):
     hist, edges = np.histogram(np.log10(samples), bins=bins, density=True)
     hist = np.log(hist / np.sum(hist)) / np.log(10)
 
-    depth = -5.75
-    ax.plot([edges[0], edges[0]], [depth, hist[0]], 'k-', alpha=0.5)
+    y_end = -5.75
+    # ax.plot([edges[0], edges[0]], [y_end, hist[0]], "k-", alpha=0.5)
     for i in range(len(edges) - 1):
-        ax.plot([edges[i], edges[i + 1]], [hist[i], hist[i]], 'k-', alpha=0.5)
-        ax.plot([edges[i + 1], edges[i + 1]], [depth, hist[i]], 'k-', alpha=0.5)
-        
-        # TODO: fill between the lines`
+        # ax.plot([edges[i], edges[i + 1]], [hist[i], hist[i]], "k-", alpha=0.5)
+        # ax.plot([edges[i + 1], edges[i + 1]], [y_end, hist[i]], "k-", alpha=0.5)
+
+        # TODO: fill between the lines
+        x_f = np.array([edges[i], edges[i + 1]])
+        y1_f = np.array([hist[i], hist[i]])
+        y2_f = np.array([y_end, y_end])
+
+        ax.fill_between(x_f, y1_f, y2_f, where=(y1_f > y2_f), color='C0', alpha=0.25)
 
     ax.set_ylim([-2.5, 0])
 
