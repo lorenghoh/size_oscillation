@@ -32,7 +32,7 @@ def rank(samples, log=True):
 def kde(samples):
     x_grid = np.log10(np.logspace(3, np.log10(np.max(samples)), 50))
 
-    log_kde = KernelDensity(bandwidth=1).fit(np.log10(samples[:, None]))
+    log_kde = KernelDensity(bandwidth=0.5).fit(np.log10(samples[:, None]))
     kde = log_kde.score_samples(x_grid[:, None]) / np.log(10)
 
     return x_grid, kde
