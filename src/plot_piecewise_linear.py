@@ -44,13 +44,15 @@ def plot_piecewise_linear(x, y):
     tree.fit(x[:, None], dy)
     dys_dt = tree.predict(x[:, None])
 
-    colors = iter(["C0", "C1"])
+    colors = iter(["C2", "C3"])
 
-    ax.plot(x, dy, ".", ms=8)
+    ax.plot(x, dy, ".", ms=8, color='C0')
     for item in np.unique(dys_dt):
         mask = dys_dt == item
-        ax.plot(x[mask], dys_dt[mask], "-", color="C1", lw=2)
-        ax.axvspan(x[mask][0], x[mask][-1], color=next(colors), alpha=0.2)
+
+        c = next(colors)
+        ax.plot(x[mask], dys_dt[mask], "-", color=c, lw=2)
+        ax.axvspan(x[mask][0], x[mask][-1], color=c, alpha=0.2)
 
     ax.set_xlabel(r"$\log_{10}$ Cloud Size", fontsize=12)
     ax.set_ylabel(r"$\delta \log_{10}$ Normalized Density", fontsize=12)
