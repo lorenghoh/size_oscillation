@@ -48,7 +48,7 @@ def plot_piecewise_linear(x, y):
 
     ax.plot(x, dy, ".", ms=8, color='C0')
     for item in np.unique(dys_dt):
-        mask = dys_dt == item
+        mask = (dys_dt == item)
 
         c = next(colors)
         ax.plot(x[mask], dys_dt[mask], "-", color=c, lw=2)
@@ -63,10 +63,15 @@ def plot_piecewise_linear(x, y):
     linreg = slope(x, y, max_n=2, return_reg=True)
     y_rs = linreg.predict(x[:, None])
 
-    print(linreg.coef_)
-
     ax.plot(x, y, ".", ms=8)
     ax.plot(x, y_rs, "-")
+
+    colors = iter(["C2", "C3"])
+    for item in np.unique(dys_dt):
+        mask = (dys_dt == item)
+        c = next(colors)
+        
+        ax.axvspan(x[mask][0], x[mask][-1], color=c, alpha=0.2)
 
     ax.set_xlabel(r"$\log_{10}$ Cloud Size", fontsize=12)
     ax.set_ylabel(r"$\log_{10}$ Normalized Density", fontsize=12)
