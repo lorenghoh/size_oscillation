@@ -37,11 +37,11 @@ def main():
 
     s_list = []
     for item in tqdm(cluster_list):
-        samples = sample(item, ctype='core')
-        x, y = distribution(samples)
+        samples = sample(item, ctype='cloud')
+        x, y, bw = distribution(samples)
         s = get_slope_piecewise(x, y)
 
-        tqdm.write(f"{s:.3f}")
+        tqdm.write(f"{s:.5f}, bw = {bw:.3f}")
         s_list.append(s)
 
     df = pd.DataFrame(s_list, columns=['slope'])

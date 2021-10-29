@@ -2,7 +2,6 @@ import warnings
 import numpy as np
 
 from pathlib import Path
-import seaborn as sns
 
 from sklearn import linear_model as lm
 from sklearn.tree import DecisionTreeRegressor
@@ -32,7 +31,7 @@ pwd = Path(config["pwd"])
 src = Path(config["case"]) / "clusters"
 
 
-def plot_piecewise_linear(x, y):
+def plot_piecewise_linear(x, y, bw=None):
     # ---- Plotting
     fig = pl.init_plot((6, 8))
 
@@ -44,7 +43,8 @@ def plot_piecewise_linear(x, y):
     tree.fit(x[:, None], dy)
     dys_dt = tree.predict(x[:, None])
 
-    colors = iter(["C2", "C3"])
+    clist = ['C3', 'C2']
+    colors = iter(clist)
 
     ax.plot(x, dy, ".", ms=8, color='C0')
     for item in np.unique(dys_dt):
@@ -55,7 +55,7 @@ def plot_piecewise_linear(x, y):
         ax.axvspan(x[mask][0], x[mask][-1], color=c, alpha=0.2)
 
     ax.set_xlabel(r"$\log_{10}$ Cloud Size", fontsize=12)
-    ax.set_ylabel(r"$\delta \log_{10}$ Normalized Density", fontsize=12)
+    ax.set_ylabel(r"$\partial \log_{10}$ Normalized Density", fontsize=12)
 
     # Subplot 2: slope
     ax = fig.add_subplot(212)
@@ -63,10 +63,15 @@ def plot_piecewise_linear(x, y):
     linreg = slope(x, y, max_n=2, return_reg=True)
     y_rs = linreg.predict(x[:, None])
 
+    print(f"Linear reg slope: {linreg.coef_[0]}")
+
+    if bw is not None:
+        print(f"Bandwidth: {bw}")
+
     ax.plot(x, y, ".", ms=8)
     ax.plot(x, y_rs, "-")
 
-    colors = iter(["C2", "C3"])
+    colors = iter(clist)
     for item in np.unique(dys_dt):
         mask = (dys_dt == item)
         c = next(colors)
@@ -82,12 +87,12 @@ def plot_piecewise_linear(x, y):
 
 def main():
     cluster_list = sorted(src.glob("*.pq"))
-    cluster = cluster_list[-360]
+    cluster = cluster_list[6]
 
-    samples = sample(cluster)
-    x, y = distribution(samples)
+    samples = sample(cluster, ctype='cloud')
+    x, y, bw = distribution(samples)
 
-    plot_piecewise_linear(x, y)
+    plot_piecewise_linear(x, np.gradient(y), bw)
 
 
 if __name__ == "__main__":
