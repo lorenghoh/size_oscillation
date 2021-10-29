@@ -1,4 +1,3 @@
-import warnings
 import numpy as np
 
 from pathlib import Path
@@ -11,14 +10,8 @@ from context import add_path
 add_path(Path(".").resolve())
 
 try:
-    import lib.plot as plib
+    import lib.plot as pl
     import lib.config
-
-    from reg.outliers import detect_outliers
-    from reg.samples import cloud_dz as sample
-    from reg.distributions import rank
-    from reg.distributions import kde
-    from reg.slopes import piecewise_linear as slope
 except Exception:
     raise Exception("Issue with dynamic import")
 
@@ -29,7 +22,7 @@ src = Path(config["case"]) / "clusters"
 
 def main():
     # ---- Plotting
-    fig = plib.init_plot((8, 3))
+    fig = pl.init_plot((12, 6))
     ax = fig.add_subplot(111)
 
     p = Path(f"{pwd}/output/slope_CGILS_S6_COR_KDE_PIECEWISE.pq")
@@ -38,13 +31,13 @@ def main():
     y = df.slope.to_numpy()
     x = np.arange(len(y)) / 60
 
-    ax.plot(x, y, "*-")
+    ax.plot(x, y, "o-")
 
     ax.set_xlabel("Time [hours]", fontsize=12)
-    ax.set_ylabel(r"b", fontsize=12)
+    ax.set_ylabel("b", fontsize=12)
 
     file_name = Path(f"{pwd}/png/timeseries.png")
-    plib.save_fig(fig, file_name)
+    pl.save_fig(fig, file_name)
 
 
 if __name__ == "__main__":
