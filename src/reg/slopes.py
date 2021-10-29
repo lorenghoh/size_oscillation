@@ -16,21 +16,21 @@ import lib.config
 
 
 config = lib.config.read_config()
-pwd = Path(config['pwd'])
+pwd = Path(config["pwd"])
 
 
 def piecewise_linear(x, y, max_n=2, return_reg=False):
-    tree = DecisionTreeRegressor(max_leaf_nodes=max_n)
+    tree = DecisionTreeRegressor(criterion="friedman_mse", max_leaf_nodes=max_n)
     tree.fit(x[:, None], np.gradient(y))
     dys_dt = tree.predict(x[:, None]).flatten()
-    
+
     _, ind, c = np.unique(dys_dt, return_index=True, return_counts=True)
     pt_in = ind[np.argsort(c)][::-1]
     pt_in = np.append(pt_in, len(dys_dt))
-    
+
     # Find the longest segment for regression
-    x_seg = x[pt_in[0]:np.min(pt_in[pt_in > pt_in[0]])]
-    y_seg = y[pt_in[0]:np.min(pt_in[pt_in > pt_in[0]])]
+    x_seg = x[pt_in[0] : np.min(pt_in[pt_in > pt_in[0]])]
+    y_seg = y[pt_in[0] : np.min(pt_in[pt_in > pt_in[0]])]
 
     # Regression
     reg = lm.TheilSenRegressor()
@@ -42,15 +42,15 @@ def piecewise_linear(x, y, max_n=2, return_reg=False):
     return reg.coef_.item()
 
 
-def linreg(x, y, model='RANSAC', remove_outlier=False, return_reg=False):
+def linreg(x, y, model="RANSAC", remove_outlier=False, return_reg=False):
     if remove_outlier:
         x, y, mask = detect_outliers(None, x, y)
 
-    if model == 'RidgeCV':
+    if model == "RidgeCV":
         reg = lm.RidgeCV()
-    elif model == 'RANSAC':
+    elif model == "RANSAC":
         reg = lm.RANSACRegressor()
-    elif model == 'TheilSen':
+    elif model == "TheilSen":
         reg = lm.TheilSenRegressor()
     else:
         raise ValueError("Regression model not found.")
@@ -62,5 +62,5 @@ def linreg(x, y, model='RANSAC', remove_outlier=False, return_reg=False):
     return reg.coef_.item()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
