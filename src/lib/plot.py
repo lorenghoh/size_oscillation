@@ -14,11 +14,13 @@ def init_plot(fs=(12, 4)):
     sns.set_style(
         "ticks",
         {
-            "axes.grid": True,
-            "axes.linewidth": "1",
-            "grid.color": "0.5",
-            "grid.linestyle": ":",
-            "legend.frameon": True,
+            'axes.grid': True, 
+            'axes.linewidth': '1',
+            'xtick.labelsize': 12,
+            'ytick.labelsize': 12,
+            'grid.color': '0.5',
+            'grid.linestyle': u':',
+            'legend.frameon': True,
         },
     )
 
