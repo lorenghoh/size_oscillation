@@ -75,7 +75,7 @@ def plot_piecewise_linear(x, y, bw=None):
     for item in np.unique(dys_dt):
         mask = (dys_dt == item)
         c = next(colors)
-        
+
         ax.axvspan(x[mask][0], x[mask][-1], color=c, alpha=0.2)
 
     ax.set_xlabel(r"$\log_{10}$ Cloud Size", fontsize=12)
