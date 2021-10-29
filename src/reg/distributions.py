@@ -27,20 +27,20 @@ def rank(samples, log=True):
 
 
 def kde(samples, cv=True):
-    x_grid = np.log10(np.logspace(2, np.log10(np.max(samples)), 50))
-    y_data = np.log10(samples)
+    x_grid = np.log10(np.logspace(3, np.log10(np.max(samples)), 50))
+    y_data = np.log10(samples[:, None])
 
     if cv:
         # use grid search cross-validation to optimize the bandwidth
         params = {"bandwidth": np.linspace(1e-2, 1, 100)}
         grid = GridSearchCV(KernelDensity(), params)
-        grid.fit(y_data[:, None])
+        grid.fit(y_data)
 
         bw = grid.best_estimator_.bandwidth
         log_kde = grid.best_estimator_
     else:
         # Place a safe bet for bandwidth
-        log_kde = KernelDensity(bandwidth=1).fit(y_data[:, None])
+        log_kde = KernelDensity(bandwidth=1).fit(y_data)
 
     kde10 = log_kde.score_samples(x_grid[:, None]) / np.log(10)
 

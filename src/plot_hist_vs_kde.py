@@ -33,17 +33,16 @@ def plot_hist_kde(samples):
     ax = fig.add_subplot(111)
 
     # KDE
-    x = np.log10(np.logspace(3, np.log10(np.max(samples)), 30))
-
-    log_kde = KernelDensity(bandwidth=0.4).fit(np.log10(samples[:, None]))
-    y = log_kde.score_samples(x[:, None]) / np.log(10)
+    x, y, _ = kde(samples)
+    y_data = np.log10(samples)
 
     ax.plot(x, y, lw=1.5, color="C1")
 
+    # Histogram
     samples = samples[samples > 1e3]
     bins = np.log10(np.logspace(3, np.log10(np.max(samples)), 9))
 
-    hist, edges = np.histogram(np.log10(samples), bins=bins, density=True)
+    hist, edges = np.histogram(y_data, bins=bins, density=True)
     hist = np.log(hist / np.sum(hist)) / np.log(10)
 
     y_end = -5.75
@@ -70,7 +69,7 @@ def plot_hist_kde(samples):
 
 def main():
     cluster_list = sorted(src.glob("*.pq"))
-    cluster = cluster_list[-360]
+    cluster = cluster_list[360]
 
     samples = sample(cluster)
     plot_hist_kde(samples)
