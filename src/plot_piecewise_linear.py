@@ -43,7 +43,7 @@ def plot_piecewise_linear(x, y, bw=None):
     tree.fit(x[:, None], dy)
     dys_dt = tree.predict(x[:, None])
 
-    clist = ['C3', 'C2']
+    clist = ['C2', 'C3']
     colors = iter(clist)
 
     ax.plot(x, dy, ".", ms=8, color='C0')
@@ -87,12 +87,12 @@ def plot_piecewise_linear(x, y, bw=None):
 
 def main():
     cluster_list = sorted(src.glob("*.pq"))
-    cluster = cluster_list[6]
+    cluster = cluster_list[360]
 
     samples = sample(cluster, ctype='cloud')
     x, y, bw = distribution(samples)
 
-    plot_piecewise_linear(x, np.gradient(y), bw)
+    plot_piecewise_linear(x, y, bw)
 
 
 if __name__ == "__main__":
