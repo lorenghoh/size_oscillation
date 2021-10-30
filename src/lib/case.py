@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-import xarray as xr
-
 from lib import config
 
 config = config.read_config()
@@ -21,14 +19,13 @@ class Model:
     nz: int
 
     def __init__(self):
-        with xr.open_dataset(src / 'CGILS_1728x576x192_25m_1s_ent.nc') as df:
-            self.case_name = 'CGILS'
-            self.dx = 25
-            self.dy = 25
-            self.dz = 25
-            self.nx = 1728
-            self.ny = 576
-            self.nz = 192
+        self.case_name = 'CGILS'
+        self.dx = 25
+        self.dy = 25
+        self.dz = 25
+        self.nx = 1728
+        self.ny = 576
+        self.nz = 192
 
 
 if __name__ == '__main__':
