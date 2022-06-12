@@ -49,7 +49,7 @@ def plot_cent_dist():
 
     lsc = iter(["-", "--", ":", "-."])
 
-    for i in np.arange(5, 16, 3):
+    for i in np.arange(5, 11, 2):
         ax.plot(m_dist[i] - np.mean(m_dist[i]), next(lsc), label=f"{i+1} km")
 
     ax.set_title("Median Distance Between Centroids", fontsize=16)
@@ -59,7 +59,6 @@ def plot_cent_dist():
 
     file_name = Path(f"{pwd}/png/plot_distance.png")
     pl.save_fig(fig, file_name)
-
 
 
 def plot_intercluster_dist():

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from pathlib import Path
+from tqdm import tqdm
 
 # Set-up local (and temporary) sys.path for import
 # All scripts for calculations and plots need this
@@ -78,6 +79,26 @@ def find_pb_clusters(df, nx=1536, ny=512):
         df.loc[df.cid.isin(_id), "cid"] = uid
 
     return df
+
+
+def write_pq(max_d=8):
+    cluster_list = sorted(src.glob("*"))
+
+    m_dist = np.zeros((8, 1440))
+    for i, item in enumerate(tqdm(cluster_list)):
+        df = pd.read_parquet(item)
+        df = df[df.type == 1].copy()
+        df = coord_to_zxy_cols(df)
+
+        cents = find_centroid(df)
+        arr = np.array([cents.x.values, cents.y.values])
+
+        tril = np.tril(dist.calc_pdist_pb(arr, arr))
+        tril = tril.ravel()
+
+        for j, d in enumerate(np.arange(1, 30)):
+            max_d = d * 1e3 / 25
+            m_dist[j, i] = np.median(tril[(tril > 5) & (tril < max_d)])
 
 
 if __name__ == "__main__":
