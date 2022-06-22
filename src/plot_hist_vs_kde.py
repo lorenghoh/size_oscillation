@@ -36,27 +36,22 @@ def plot_hist_kde(samples):
     x, y, _ = kde(samples)
     y_data = np.log10(samples)
 
-    ax.plot(x, y, lw=1.5, color="C1")
+    ax.plot(x, y, "-", lw=3, color="C1")
 
     # Histogram
     samples = samples[samples > 1e3]
     bins = np.log10(np.logspace(3, np.log10(np.max(samples)), 9))
 
     hist, edges = np.histogram(y_data, bins=bins, density=True)
-    hist = np.log(hist / np.sum(hist)) / np.log(10)
+    hist = np.log(hist / 2) / np.log(10)
 
-    y_end = -5.75
-    # ax.plot([edges[0], edges[0]], [y_end, hist[0]], "k-", alpha=0.5)
+    y_end = -6
     for i in range(len(edges) - 1):
-        # ax.plot([edges[i], edges[i + 1]], [hist[i], hist[i]], "k-", alpha=0.5)
-        # ax.plot([edges[i + 1], edges[i + 1]], [y_end, hist[i]], "k-", alpha=0.5)
-
-        # TODO: fill between the lines
         x_f = np.array([edges[i], edges[i + 1]])
         y1_f = np.array([hist[i], hist[i]])
         y2_f = np.array([y_end, y_end])
 
-        ax.fill_between(x_f, y1_f, y2_f, where=(y1_f > y2_f), color='C0', alpha=0.25)
+        ax.fill_between(x_f, y1_f, y2_f, where=(y1_f > y2_f), color='C0', alpha=0.8)
 
     ax.set_ylim([-2.5, 0])
 
@@ -69,7 +64,7 @@ def plot_hist_kde(samples):
 
 def main():
     cluster_list = sorted(src.glob("*.pq"))
-    cluster = cluster_list[360]
+    cluster = cluster_list[720]
 
     samples = sample(cluster)
     plot_hist_kde(samples)
