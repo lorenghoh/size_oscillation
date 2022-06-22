@@ -1,7 +1,6 @@
 import numpy as np
 
 from pathlib import Path
-from sklearn.neighbors import KernelDensity
 
 # Set-up local (and temporary) sys.path for import
 # All scripts for calculations and plots need this
@@ -13,11 +12,8 @@ try:
     import lib.plot as pl
     import lib.config
 
-    from reg.outliers import detect_outliers
     from reg.samples import cloud_dz as sample
-    from reg.distributions import rank
     from reg.distributions import kde
-    from reg.slopes import piecewise_linear as slope
 except Exception:
     raise Exception("Issue with dynamic import")
 
@@ -51,7 +47,7 @@ def plot_hist_kde(samples):
         y1_f = np.array([hist[i], hist[i]])
         y2_f = np.array([y_end, y_end])
 
-        ax.fill_between(x_f, y1_f, y2_f, where=(y1_f > y2_f), color='C0', alpha=0.8)
+        ax.fill_between(x_f, y1_f, y2_f, where=(y1_f > y2_f), color="C0", alpha=0.4)
 
     ax.set_ylim([-2.5, 0])
 
