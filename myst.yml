@@ -1,0 +1,21 @@
+version: 1
+project:
+  id: 9db8ba16-0b44-433d-a426-f407b25766b1
+  # title:
+  # description:
+  # keywords: []
+  authors:
+    - name: Loren Oh
+      orcid: https://orcid.org/0009-0002-2916-0350
+      affiliation: University of British Columbia
+      department: Earth, Ocean and Atmospheric Sciences
+  github: lorenghoh/size_oscillation
+  toc:
+    - file: frontmatter.md
+    - pattern: 'notebooks/0*.ipynb'
+
+site:
+  template: book-theme
+  options:
+    hide_outline: true
+    logo_text: Loren Oh
