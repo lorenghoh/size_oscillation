@@ -4,6 +4,6 @@ This repository consists of codes accompanying the paper _Quantifying the Oscill
 
 The Jupyter notebooks can be seen at:
 
-> https://lorenghoh.github.io/size_oscillation
+> https://lorenghoh.github.io/size-oscillation
 
 which is a website built with Jupyter Book 2 (based on MyST Markdown).
